@@ -3,6 +3,7 @@ package db
 import (
 	"bank/utils"
 	"context"
+	"database/sql"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -52,9 +53,52 @@ func TestUpdateEntry(t *testing.T) {
 	args := newCreateEntryParams(account)
 	entry := createNewEntry(t, args)
 
-	require.NotEmpty(t, entry)
-	require.NotZero(t, entry.CreatedAt)
-	require.NotZero(t, entry.ID)
-	require.Equal(t, entry.AccountID, account.ID)
-	require.Equal(t, entry.Amount, args.Amount)
+	uArgs := UpdateEntryParams{
+		ID:     entry.ID,
+		Amount: utils.RandomMoney(),
+	}
+
+	uEntry, err := testQueries.UpdateEntry(context.Background(), uArgs)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, uEntry)
+	require.Equal(t, entry.CreatedAt, uEntry.CreatedAt)
+	require.Equal(t, entry.AccountID, uEntry.AccountID)
+	require.Equal(t, entry.ID, uEntry.ID)
+	require.Equal(t, uEntry.Amount, uArgs.Amount)
+}
+
+func TestDeleteEntry(t *testing.T) {
+	account, _ := createRandAccount(t)
+	args := newCreateEntryParams(account)
+	entry := createNewEntry(t, args)
+
+	err := testQueries.DeleteEntry(context.Background(), entry.ID)
+
+	require.NoError(t, err)
+
+	entry1, err := testQueries.GetEntry(context.Background(), entry.ID)
+
+	require.ErrorIs(t, sql.ErrNoRows, err)
+	require.Empty(t, entry1)
+}
+
+func TestListEntries(t *testing.T) {
+	acc, _ := createRandAccount(t)
+
+	for i := 0; i < 10; i++ {
+		createNewEntry(t, newCreateEntryParams(acc))
+	}
+
+	entries, err := testQueries.ListEntries(context.Background(), ListEntriesParams{
+		Limit:  5,
+		Offset: 5,
+	})
+
+	require.NoError(t, err)
+	require.Len(t, entries, 5)
+
+	for _, entry := range entries {
+		require.NotEmpty(t, entry)
+	}
 }
