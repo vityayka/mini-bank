@@ -10,18 +10,20 @@ import (
 )
 
 var testQueries *Queries
+var testDB *sql.DB
 
 func TestMain(m *testing.M) {
-	dsn := "host=localhost user=postgres password=password port=5432 database=bank sslmode=disable"
-	conn, err := sql.Open("pgx", dsn)
+	var err error
+	testDB, err = sql.Open("pgx", "host=localhost user=postgres password=password port=5432 database=bank sslmode=disable")
+	defer testDB.Close()
 	if err != nil {
 		log.Fatal("couldn't connect to DB", err)
 	}
-	if err = conn.Ping(); err != nil {
+	if err = testDB.Ping(); err != nil {
 		log.Fatal("couldn't connect to DB", err)
 	}
 
-	testQueries = New(conn)
+	testQueries = New(testDB)
 
 	os.Exit(m.Run())
 }
