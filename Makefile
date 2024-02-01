@@ -1,5 +1,5 @@
 migrate_up:
-	migrate -path db/migration -database "postgres://postgres:password@localhost:5432/bank?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgres://postgres:password@postgres:5432/bank?sslmode=disable" -verbose up
 
 migrate_down:
 	migrate -path db/migration -database "postgres://postgres:password@localhost:5432/bank?sslmode=disable" -verbose down
