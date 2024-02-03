@@ -2,12 +2,13 @@ package db
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateTransferTx(t *testing.T) {
-	store := NewStore(testDB)
+	store := NewDBStore(testDB)
 
 	acc1, _ := createRandAccount(t)
 	acc2, _ := createRandAccount(t)
@@ -80,7 +81,7 @@ func TestCreateTransferTx(t *testing.T) {
 }
 
 func TestCreateTransferTxDeadlock(t *testing.T) {
-	store := NewStore(testDB)
+	store := NewDBStore(testDB)
 
 	acc1, _ := createRandAccount(t)
 	acc2, _ := createRandAccount(t)

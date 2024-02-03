@@ -2,7 +2,7 @@ package main
 
 import (
 	"bank/api"
-	db2 "bank/db/sqlc"
+	db "bank/db/sqlc"
 	"database/sql"
 	"fmt"
 	"log"
@@ -13,16 +13,16 @@ import (
 const webPort string = "80"
 
 func main() {
-	db, err := sql.Open("pgx", "host=localhost user=postgres password=password port=5432 database=bank sslmode=disable")
+	database, err := sql.Open("pgx", "host=localhost user=postgres password=password port=5432 database=bank sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = db.Ping(); err != nil {
+	if err = database.Ping(); err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer database.Close()
 
-	store := db2.NewStore(db)
+	store := db.NewDBStore(database)
 	server := api.NewServer(store)
 	server.Serve(fmt.Sprintf(":%s", webPort))
 }

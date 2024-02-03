@@ -9,3 +9,6 @@ sqlc:
 
 test:
 	go test -v -cover ./...
+
+mock:
+	mockgen -package mockdb -destination db/mock/store.go bank/db/sqlc Store

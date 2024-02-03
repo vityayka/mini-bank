@@ -8,7 +8,7 @@ import (
 const alphabet string = "abcdefghijklmnopqrstuvwxyz"
 
 func RandomMoney() int64 {
-	return randomInt(0, 1_000_000)
+	return RandomInt(0, 1_000_000)
 }
 
 func RandomName() string {
@@ -20,7 +20,7 @@ func RandomCurrency() string {
 	return currencies[rand.Int31n(3)]
 }
 
-func randomInt(min, max int64) int64 {
+func RandomInt(min, max int64) int64 {
 	return min + rand.Int63n(max-min+1)
 }
 
