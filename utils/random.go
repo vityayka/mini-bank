@@ -16,8 +16,7 @@ func RandomName() string {
 }
 
 func RandomCurrency() string {
-	currencies := []string{"USD", "EUR", "UAH"}
-	return currencies[rand.Int31n(3)]
+	return GetSupportedCurrencies()[rand.Int31n(3)]
 }
 
 func RandomInt(min, max int64) int64 {
