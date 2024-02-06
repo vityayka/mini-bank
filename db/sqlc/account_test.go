@@ -4,14 +4,17 @@ import (
 	"bank/utils"
 	"context"
 	"database/sql"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func createRandAccount(t *testing.T) (Account, CreateAccountParams) {
+	usr, _ := createRandUser(t)
 	args := CreateAccountParams{
 		Owner:    utils.RandomName(),
+		UserID:   usr.ID,
 		Balance:  utils.RandomMoney(),
 		Currency: utils.RandomCurrency(),
 	}
@@ -29,6 +32,7 @@ func TestCreateAccount(t *testing.T) {
 	require.Equal(t, createArgs.Owner, account.Owner)
 	require.Equal(t, createArgs.Balance, account.Balance)
 	require.Equal(t, createArgs.Currency, account.Currency)
+	require.Equal(t, createArgs.UserID, account.UserID)
 	require.NotZero(t, account.ID)
 	require.NotZero(t, account.CreatedAt)
 }
@@ -43,6 +47,7 @@ func TestGetAccount(t *testing.T) {
 	require.Equal(t, acc1.Balance, acc2.Balance)
 	require.Equal(t, acc1.Currency, acc2.Currency)
 	require.Equal(t, acc1.ID, acc2.ID)
+	require.Equal(t, acc1.UserID, acc2.UserID)
 	require.WithinDuration(t, acc1.CreatedAt, acc2.CreatedAt, time.Second)
 }
 

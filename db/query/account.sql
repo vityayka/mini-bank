@@ -1,8 +1,9 @@
 -- name: CreateAccount :one
 INSERT INTO accounts (owner,
+                      user_id,
                       balance,
                       currency)
-VALUES ($1, $2, $3)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: GetAccount :one
@@ -34,6 +35,3 @@ RETURNING *;
 
 -- name: DeleteAccount :exec
 DELETE FROM accounts WHERE id = $1;
-
-
-
