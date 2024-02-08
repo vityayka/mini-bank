@@ -120,6 +120,7 @@ func TestCreateAccount(t *testing.T) {
 
 	arg := db.CreateAccountParams{
 		Owner:    account.Owner,
+		UserID:   account.UserID,
 		Balance:  0,
 		Currency: account.Currency,
 	}
@@ -128,6 +129,7 @@ func TestCreateAccount(t *testing.T) {
 		name   string
 		params struct {
 			Owner    string
+			UserID   int64 `json:"user_id"`
 			Currency string
 		}
 		buildStubs    func(store *mockdb.MockStore)
@@ -137,9 +139,10 @@ func TestCreateAccount(t *testing.T) {
 			name: "OK",
 			params: struct {
 				Owner    string
+				UserID   int64 `json:"user_id"`
 				Currency string
 			}{
-				account.Owner, account.Currency,
+				account.Owner, account.UserID, account.Currency,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -163,9 +166,10 @@ func TestCreateAccount(t *testing.T) {
 			name: "DB error",
 			params: struct {
 				Owner    string
+				UserID   int64 `json:"user_id"`
 				Currency string
 			}{
-				account.Owner, account.Currency,
+				account.Owner, account.UserID, account.Currency,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -181,9 +185,10 @@ func TestCreateAccount(t *testing.T) {
 			name: "Validation fail",
 			params: struct {
 				Owner    string
+				UserID   int64 `json:"user_id"`
 				Currency string
 			}{
-				account.Owner, "Bad currency",
+				account.Owner, account.UserID, "Bad currency",
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -313,5 +318,6 @@ func randomAccount() db.Account {
 		ID:       utils.RandomInt(1, 1000),
 		Owner:    utils.RandomName(),
 		Currency: utils.RandomCurrency(),
+		UserID:   utils.RandomInt(1, 1000),
 	}
 }
