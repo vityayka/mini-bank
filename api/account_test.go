@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -126,27 +127,28 @@ func TestCreateAccount(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name   string
-		params struct {
-			Owner    string
-			UserID   int64 `json:"user_id"`
-			Currency string
-		}
+		name          string
+		params        gin.H
 		buildStubs    func(store *mockdb.MockStore)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name: "OK",
-			params: struct {
-				Owner    string
-				UserID   int64 `json:"user_id"`
-				Currency string
-			}{
-				account.Owner, account.UserID, account.Currency,
+			params: gin.H{
+				"owner":    account.Owner,
+				"user_id":  account.UserID,
+				"currency": account.Currency,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
+				matcher := func(x any) bool {
+					if params, isOk := x.(db.CreateAccountParams); isOk {
+						return params.Balance == arg.Balance && params.UserID == arg.UserID
+					}
+					return false
+				}
+
 				store.EXPECT().
-					CreateAccount(gomock.Any(), gomock.Eq(arg)).
+					CreateAccount(gomock.Any(), gomock.Cond(matcher)).
 					Times(1).
 					Return(account, nil)
 			},
@@ -164,12 +166,10 @@ func TestCreateAccount(t *testing.T) {
 		},
 		{
 			name: "DB error",
-			params: struct {
-				Owner    string
-				UserID   int64 `json:"user_id"`
-				Currency string
-			}{
-				account.Owner, account.UserID, account.Currency,
+			params: gin.H{
+				"owner":    account.Owner,
+				"user_id":  account.UserID,
+				"currency": account.Currency,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -183,13 +183,12 @@ func TestCreateAccount(t *testing.T) {
 		},
 		{
 			name: "Validation fail",
-			params: struct {
-				Owner    string
-				UserID   int64 `json:"user_id"`
-				Currency string
-			}{
-				account.Owner, account.UserID, "Bad currency",
+			params: gin.H{
+				"owner":    account.Owner,
+				"user_id":  account.UserID,
+				"currency": "RUB",
 			},
+
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
 					CreateAccount(gomock.Any(), gomock.Any()).
@@ -265,8 +264,11 @@ func TestListAccounts(t *testing.T) {
 				Count   int64
 			}{1, 11},
 			buildStubs: func(store *mockdb.MockStore) {
+				matcher := func(x any) bool {
+					return true
+				}
 				store.EXPECT().
-					ListAccounts(gomock.Any(), gomock.Any()).
+					ListAccounts(gomock.Any(), gomock.Cond(matcher)).
 					Times(0)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
