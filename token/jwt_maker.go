@@ -2,28 +2,62 @@ package token
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
-
-const minSecretKeySize = 32
 
 type JWTMaker struct {
 	secretKey string
 }
 
 var (
-	ErrInvalidToken = errors.New("invalid token")
+	ErrInvalidToken      = errors.New("invalid token")
+	ErrSecretKeyTooShort = errors.New("secret key too short")
 )
 
 func NewJWTMaker(secretKey string) (Maker, error) {
 	if len(secretKey) < minSecretKeySize {
-		return nil, fmt.Errorf("provided secret key's size is less than min %d chars", minSecretKeySize)
+		return nil, ErrSecretKeyTooShort
 	}
 
 	return &JWTMaker{secretKey}, nil
+}
+
+type JWTPayload struct {
+	Payload
+	jwt.RegisteredClaims
+}
+
+func NewJWTPayload(username string, duration time.Duration) (*JWTPayload, error) {
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+
+	issuedAt := time.Now()
+	expiresAt := time.Now().Add(duration)
+
+	payload := &JWTPayload{}
+
+	payload.Payload = Payload{
+		ID:        uuid,
+		Username:  username,
+		IssuedAt:  issuedAt,
+		ExpiresAt: expiresAt,
+	}
+
+	payload.RegisteredClaims = jwt.RegisteredClaims{
+		Issuer:    "mini-bank",
+		Subject:   "auth",
+		Audience:  jwt.ClaimStrings{username},
+		ExpiresAt: jwt.NewNumericDate(expiresAt),
+		NotBefore: jwt.NewNumericDate(issuedAt),
+		IssuedAt:  jwt.NewNumericDate(issuedAt),
+	}
+
+	return payload, nil
 }
 
 func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, error) {
