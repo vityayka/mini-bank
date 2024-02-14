@@ -30,7 +30,7 @@ type JWTPayload struct {
 	jwt.RegisteredClaims
 }
 
-func NewJWTPayload(username string, duration time.Duration) (*JWTPayload, error) {
+func NewJWTPayload(userID int64, duration time.Duration) (*JWTPayload, error) {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func NewJWTPayload(username string, duration time.Duration) (*JWTPayload, error)
 
 	payload.Payload = Payload{
 		ID:        uuid,
-		Username:  username,
+		UserID:    userID,
 		IssuedAt:  issuedAt,
 		ExpiresAt: expiresAt,
 	}
@@ -51,7 +51,7 @@ func NewJWTPayload(username string, duration time.Duration) (*JWTPayload, error)
 	payload.RegisteredClaims = jwt.RegisteredClaims{
 		Issuer:    "mini-bank",
 		Subject:   "auth",
-		Audience:  jwt.ClaimStrings{username},
+		Audience:  jwt.ClaimStrings{string(userID)},
 		ExpiresAt: jwt.NewNumericDate(expiresAt),
 		NotBefore: jwt.NewNumericDate(issuedAt),
 		IssuedAt:  jwt.NewNumericDate(issuedAt),
@@ -60,8 +60,8 @@ func NewJWTPayload(username string, duration time.Duration) (*JWTPayload, error)
 	return payload, nil
 }
 
-func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, error) {
-	payload, err := NewJWTPayload(username, duration)
+func (maker *JWTMaker) CreateToken(userID int64, duration time.Duration) (string, error) {
+	payload, err := NewJWTPayload(userID, duration)
 	if err != nil {
 		return "", err
 	}

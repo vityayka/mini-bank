@@ -26,6 +26,16 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
+	userID, _ := getUserIdFromAuth(ctx)
+	_, err = server.store.GetUserAccount(ctx, db.GetUserAccountParams{userID, request.FromAccountID})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			ctx.JSON(http.StatusForbidden, errorResponse(errors.New("forbidden")))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 	fromAccount, err := server.validAccount(ctx, request.FromAccountID, request.Currency)
 	if err != nil {
 		return

@@ -13,7 +13,6 @@ import (
 type createAccountRequest struct {
 	Owner    string `json:"owner" binding:"required"`
 	Currency string `json:"currency" binding:"required,currency"`
-	UserID   int64  `json:"user_id" binding:"required,gt=0"`
 }
 
 func (server *Server) createAccount(ctx *gin.Context) {
@@ -24,9 +23,15 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
+	userID, err := getUserIdFromAuth(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	arg := db.CreateAccountParams{
 		Owner:    request.Owner,
-		UserID:   request.UserID,
+		UserID:   userID,
 		Balance:  0,
 		Currency: request.Currency,
 	}
@@ -53,7 +58,8 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
-	account, err := server.store.GetAccount(ctx, request.ID)
+	userID, _ := getUserIdFromAuth(ctx)
+	account, err := server.store.GetUserAccount(ctx, db.GetUserAccountParams{userID, request.ID})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -80,7 +86,10 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		return
 	}
 
+	userID, _ := getUserIdFromAuth(ctx)
+
 	arg := db.ListAccountsParams{
+		UserID: userID,
 		Limit:  request.Count,
 		Offset: (request.PageNum - 1) * request.Count,
 	}

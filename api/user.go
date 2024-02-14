@@ -2,6 +2,7 @@ package api
 
 import (
 	db "bank/db/sqlc"
+	"bank/token"
 	"bank/utils"
 	"database/sql"
 	"errors"
@@ -109,7 +110,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	token, err := server.tokenMaker.CreateToken(user.Username, time.Minute*30)
+	token, err := server.tokenMaker.CreateToken(user.ID, time.Minute*30)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "wrong password"})
 		return
@@ -130,4 +131,18 @@ func (server *Server) loginUser(ctx *gin.Context) {
 	log.Println("user_id", rsp.ID, rsp.Email)
 
 	ctx.JSON(http.StatusOK, rsp)
+}
+
+func getUserIdFromAuth(ctx *gin.Context) (int64, error) {
+	authPayload, exists := ctx.Get(authPayloadKey)
+	if !exists {
+		return 0, errors.New("request is not authenticated")
+	}
+
+	payload, isOk := authPayload.(*token.Payload)
+	if !isOk {
+		return 0, errors.New("request is not authenticated")
+	}
+
+	return payload.UserID, nil
 }

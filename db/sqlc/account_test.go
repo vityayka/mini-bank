@@ -12,11 +12,15 @@ import (
 
 func createRandAccount(t *testing.T) (Account, CreateAccountParams) {
 	usr, _ := createRandUser(t)
+	return createAccountForUser(t, usr.ID, utils.RandomCurrency())
+}
+
+func createAccountForUser(t *testing.T, userID int64, currency string) (Account, CreateAccountParams) {
 	args := CreateAccountParams{
 		Owner:    utils.RandomName(),
-		UserID:   usr.ID,
+		UserID:   userID,
 		Balance:  utils.RandomMoney(),
-		Currency: utils.RandomCurrency(),
+		Currency: currency,
 	}
 
 	account, err := testQueries.CreateAccount(context.Background(), args)
@@ -39,7 +43,7 @@ func TestCreateAccount(t *testing.T) {
 
 func TestGetAccount(t *testing.T) {
 	acc1, _ := createRandAccount(t)
-	acc2, err := testQueries.GetAccount(context.Background(), acc1.ID)
+	acc2, err := testQueries.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
 	require.NoError(t, err)
 	require.NotEmpty(t, acc2)
 
@@ -75,24 +79,28 @@ func TestDeleteAccount(t *testing.T) {
 
 	require.NoError(t, err)
 
-	acc2, err := testQueries.GetAccount(context.Background(), acc1.ID)
+	acc2, err := testQueries.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
 
 	require.Empty(t, acc2)
 	require.ErrorIs(t, sql.ErrNoRows, err)
 }
 
 func TestListAccounts(t *testing.T) {
-	for i := 0; i < 10; i++ {
-		createRandAccount(t)
+	user, _ := createRandUser(t)
+
+	currencies := utils.GetSupportedCurrencies()
+	for _, currency := range currencies {
+		createAccountForUser(t, user.ID, currency)
 	}
 
 	accounts, err := testQueries.ListAccounts(context.Background(), ListAccountsParams{
+		UserID: user.ID,
 		Limit:  5,
-		Offset: 5,
+		Offset: 0,
 	})
 
 	require.NoError(t, err)
-	require.Len(t, accounts, 5)
+	require.Len(t, accounts, len(currencies))
 
 	for _, account := range accounts {
 		require.NotEmpty(t, account)

@@ -112,9 +112,9 @@ func TestCreateTransferTxDeadlock(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	fromAccount, err := testQueries.GetAccount(context.Background(), acc1.ID)
+	fromAccount, err := testQueries.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
 	require.NoError(t, err)
-	toAccount, err := testQueries.GetAccount(context.Background(), acc2.ID)
+	toAccount, err := testQueries.GetUserAccount(context.Background(), GetUserAccountParams{acc2.UserID, acc2.ID})
 	require.NoError(t, err)
 
 	//check balances

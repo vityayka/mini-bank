@@ -13,13 +13,13 @@ func TestJWTMaker(t *testing.T) {
 	maker, err := NewJWTMaker(utils.RandomString(32))
 	require.NoError(t, err)
 
-	username := utils.RandomName()
+	userID := utils.RandomInt(1, 1000)
 	duration := time.Minute
 
 	issuedAt := time.Now()
 	expiresAt := issuedAt.Add(duration)
 
-	token, err := maker.CreateToken(username, duration)
+	token, err := maker.CreateToken(userID, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
@@ -27,7 +27,7 @@ func TestJWTMaker(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 	require.NotZero(t, payload.ID)
-	require.Equal(t, payload.Username, username)
+	require.Equal(t, payload.UserID, userID)
 	require.WithinDuration(t, expiresAt, payload.ExpiresAt, time.Second)
 	require.WithinDuration(t, issuedAt, payload.IssuedAt, time.Second)
 }
@@ -36,10 +36,10 @@ func TestExpiredToken(t *testing.T) {
 	maker, err := NewJWTMaker(utils.RandomString(32))
 	require.NoError(t, err)
 
-	username := utils.RandomName()
+	userID := utils.RandomInt(1, 1000)
 	duration := -time.Minute
 
-	token, err := maker.CreateToken(username, duration)
+	token, err := maker.CreateToken(userID, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
@@ -54,10 +54,10 @@ func TestShortSecretKey(t *testing.T) {
 }
 
 func TestAlgNone(t *testing.T) {
-	username := utils.RandomName()
+	userID := utils.RandomInt(1, 1000)
 	duration := time.Minute
 
-	jwtPayload, err := NewJWTPayload(username, duration)
+	jwtPayload, err := NewJWTPayload(userID, duration)
 	require.NoError(t, err)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodNone, jwtPayload)
