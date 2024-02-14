@@ -2,6 +2,7 @@ package token
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -51,7 +52,7 @@ func NewJWTPayload(userID int64, duration time.Duration) (*JWTPayload, error) {
 	payload.RegisteredClaims = jwt.RegisteredClaims{
 		Issuer:    "mini-bank",
 		Subject:   "auth",
-		Audience:  jwt.ClaimStrings{string(userID)},
+		Audience:  jwt.ClaimStrings{fmt.Sprintf("%d", userID)},
 		ExpiresAt: jwt.NewNumericDate(expiresAt),
 		NotBefore: jwt.NewNumericDate(issuedAt),
 		IssuedAt:  jwt.NewNumericDate(issuedAt),
