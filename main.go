@@ -3,6 +3,7 @@ package main
 import (
 	"bank/api"
 	db "bank/db/sqlc"
+	"bank/utils"
 	"database/sql"
 	"fmt"
 	"log"
@@ -13,7 +14,13 @@ import (
 const webPort string = "8080"
 
 func main() {
-	database, err := sql.Open("pgx", "host=localhost user=postgres password=password port=5432 database=bank sslmode=disable")
+	config, err := utils.LoadConfig(".")
+	if err != nil {
+		log.Fatal("cannot load config:", err)
+	}
+
+	database, err := sql.Open(config.DBDriver, config.DBSource)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,6 +30,9 @@ func main() {
 	defer database.Close()
 
 	store := db.NewDBStore(database)
-	server := api.NewServer(store)
+	server, err := api.NewServer(config, store)
+	if err != nil {
+		log.Fatal(err)
+	}
 	server.Serve(fmt.Sprintf(":%s", webPort))
 }

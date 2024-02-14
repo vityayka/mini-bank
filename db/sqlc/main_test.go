@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bank/utils"
 	"database/sql"
 	"log"
 	"os"
@@ -14,7 +15,12 @@ var testDB *sql.DB
 
 func TestMain(m *testing.M) {
 	var err error
-	testDB, err = sql.Open("pgx", "host=localhost user=postgres password=password port=5432 database=bank sslmode=disable")
+	config, err := utils.LoadConfig("../../")
+	if err != nil {
+		log.Fatal("cannot load config:", err)
+	}
+
+	testDB, err = sql.Open(config.DBDriver, config.DBSource)
 	defer testDB.Close()
 	if err != nil {
 		log.Fatal("couldn't connect to DB", err)

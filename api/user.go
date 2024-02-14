@@ -3,6 +3,7 @@ package api
 import (
 	db "bank/db/sqlc"
 	"bank/utils"
+	"database/sql"
 	"errors"
 	"log"
 	"net/http"
@@ -71,4 +72,62 @@ func (server *Server) createUser(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, rsp)
+}
+
+type loginUserRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6,max=72"`
+}
+
+type loginUserResponse struct {
+	Token              string `json:"token"`
+	createUserResponse `json:"user"`
+}
+
+func (server *Server) loginUser(ctx *gin.Context) {
+	var request loginUserRequest
+	err := ctx.ShouldBindJSON(&request)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := server.store.GetUserByEmail(ctx, request.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "user doesn't exist"})
+			return
+		}
+		log.Println(err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	err = utils.CompareHashAndPassword(user.HashedPassword, request.Password)
+	if err != nil {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "wrong password"})
+		return
+	}
+
+	token, err := server.tokenMaker.CreateToken(user.Username, time.Minute*30)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "wrong password"})
+		return
+	}
+
+	rsp := loginUserResponse{
+		token,
+		createUserResponse{
+			ID:                user.ID,
+			Username:          user.Username,
+			FullName:          user.FullName,
+			Email:             user.Email,
+			PasswordChangedAt: user.PasswordChangedAt,
+			CreatedAt:         user.CreatedAt,
+		},
+	}
+
+	log.Println("user_id", rsp.ID, rsp.Email)
+
+	ctx.JSON(http.StatusOK, rsp)
 }

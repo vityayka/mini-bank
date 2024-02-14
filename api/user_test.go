@@ -84,7 +84,7 @@ func TestCreateUser(t *testing.T) {
 
 		tc.buildStubs(store)
 
-		server := NewServer(store)
+		server := newTestServer(t, store)
 		recorder := httptest.NewRecorder()
 
 		payload, _ := json.Marshal(tc.params)
