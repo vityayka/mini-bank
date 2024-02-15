@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"os"
 	"time"
 
@@ -30,21 +31,31 @@ func LoadConfig(path string) (config Config, err error) {
 		// maybe the config envVarExists in the Environment, try it:
 		var envVarExists = false
 		if config.DBDriver, envVarExists = os.LookupEnv("DB_DRIVER"); !envVarExists {
+			log.Println("driver missing")
 			return
 		}
+		log.Println("dbdriver: ", config.DBDriver)
 		if config.DBSource, envVarExists = os.LookupEnv("DB_SOURCE"); !envVarExists {
+			log.Println("source missing")
 			return
 		}
+		log.Println("db src: ", config.DBSource)
 		if config.ServerAddress, envVarExists = os.LookupEnv("SERVER_ADDRESS"); !envVarExists {
+			log.Println("srv addr missing")
 			return
 		}
+		log.Println("srv addr: ", config.ServerAddress)
 		if config.TokenSymmetricKey, envVarExists = os.LookupEnv("TOKEN_SYMMETRIC_KEY"); !envVarExists {
+			log.Println("token key missing")
 			return
 		}
+		log.Println("sym key: ", config.TokenSymmetricKey)
 		if accessTokenDuration, envVarExists := os.LookupEnv("ACCESS_TOKEN_DURATION"); envVarExists {
+			log.Println("token dur: ", config.AccessTokenDuration)
 			config.AccessTokenDuration, err = time.ParseDuration(accessTokenDuration)
 			return
 		}
+		log.Println("token duration missing")
 		return
 	}
 
