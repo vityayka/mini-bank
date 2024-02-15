@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"os"
 	"time"
 
 	"github.com/spf13/viper"
@@ -9,7 +10,7 @@ import (
 // Config stores all configuration of the application.
 // The values are read by viper from a config file or environment variable.
 type Config struct {
-	DBDriver            string        `mapstructure:"DB_DRIVER"`
+	DBDriver            string        `mapstructure:"DB _DRIVER"`
 	DBSource            string        `mapstructure:"DB_SOURCE"`
 	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
 	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
@@ -26,6 +27,24 @@ func LoadConfig(path string) (config Config, err error) {
 
 	err = viper.ReadInConfig()
 	if err != nil {
+		// maybe the config envVarExists in the Environment, try it:
+		var envVarExists = false
+		if config.DBDriver, envVarExists = os.LookupEnv("DB_DRIVER"); !envVarExists {
+			return
+		}
+		if config.DBSource, envVarExists = os.LookupEnv("DB_SOURCE"); !envVarExists {
+			return
+		}
+		if config.ServerAddress, envVarExists = os.LookupEnv("SERVER_ADDRESS"); !envVarExists {
+			return
+		}
+		if config.TokenSymmetricKey, envVarExists = os.LookupEnv("TOKEN_SYMMETRIC_KEY"); !envVarExists {
+			return
+		}
+		if accessTokenDuration, envVarExists := os.LookupEnv("ACCESS_TOKEN_DURATION"); envVarExists {
+			config.AccessTokenDuration, err = time.ParseDuration(accessTokenDuration)
+			return
+		}
 		return
 	}
 

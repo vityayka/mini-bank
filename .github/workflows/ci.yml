@@ -51,4 +51,10 @@ jobs:
         run: make migrate_up
 
       - name: Test
+        env:
+          DB_DRIVER: ${{ vars.DB_DRIVER }}
+          DB_SOURCE: ${{ vars.DB_SOURCE }}
+          SERVER_ADDRESS: ${{ vars.SERVER_ADDRESS }}
+          TOKEN_SYMMETRIC_KEY: ${{ vars.TOKEN_SYMMETRIC_KEY }}
+          ACCESS_TOKEN_DURATION: ${{ vars.ACCESS_TOKEN_DURATION }}        
         run: make test
