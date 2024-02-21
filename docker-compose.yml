@@ -26,6 +26,7 @@ services:
       mode: replicated
       replicas: 1
     environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bank
