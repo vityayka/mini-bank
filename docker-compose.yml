@@ -30,7 +30,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bank
     volumes:
-      - ~/data/mini-bank/postgres/:/var/lib/postgresql/data/
+      - ~/data/mini-bank/postgres/:/var/lib/postgresql/data/pgdata
     healthcheck:
       test: pg_isready -U postgres
       interval: 5s
