@@ -2,21 +2,21 @@ version: "3.9"
 
 services:
 
-  app:
-    build:
-      context: ./
-      dockerfile: Dockerfile
-    restart: always
-    ports: 
-      - "8080:8080"
-    env_file:
-      - app.env
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
-    volumes:
-      - ./app.env:/app/app.env
+  # app:
+  #   build:
+  #     context: ./
+  #     dockerfile: Dockerfile
+  #   restart: always
+  #   ports: 
+  #     - "8080:8080"
+  #   env_file:
+  #     - app.env
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #       restart: true
+  #   volumes:
+  #     - ./app.env:/app/app.env
 
   db:
     image: 'postgres'
@@ -31,9 +31,12 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bank
     volumes:
-      - ~/data/mini-bank/postgres/:/var/lib/postgresql/data/pgdata
+      - data:/var/lib/postgresql/data/pgdata
     healthcheck:
       test: pg_isready -U postgres
       interval: 5s
       timeout: 10s
       retries: 5
+
+volumes:
+  data:

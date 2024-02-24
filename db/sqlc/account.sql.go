@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const addBalanceToAccount = `-- name: AddBalanceToAccount :one
@@ -34,39 +35,35 @@ func (q *Queries) AddBalanceToAccount(ctx context.Context, arg AddBalanceToAccou
 	return i, err
 }
 
-const createAccount = `-- name: CreateAccount :one
+const createAccount = `-- name: CreateAccount :exec
 INSERT INTO accounts (owner,
                       user_id,
                       balance,
-                      currency)
-VALUES ($1, $2, $3, $4)
-RETURNING id, owner, balance, currency, created_at, user_id
+                      currency, 
+                      created_at)
+VALUES ($1, $2, $3, 'USD', $4), ($1, $2, $3, 'EUR', $4), ($1, $2, $3, 'UAH', $4),
+	   ($1, $2, $3, 'RUB', $4), ($1, $2, $3, 'CHN', $4), ($1, $2, $3, 'QWE', $4),
+	   ($1, $2, $3, 'WER', $4), ($1, $2, $3, 'ERT', $4), ($1, $2, $3, 'RTY', $4),
+	   ($1, $2, $3, 'TYU', $4), ($1, $2, $3, 'YUI', $4), ($1, $2, $3, 'UIO', $4),
+	   ($1, $2, $3, 'IOP', $4), ($1, $2, $3, 'ASD', $4), ($1, $2, $3, 'SDF', $4),
+	   ($1, $2, $3, 'DFG', $4), ($1, $2, $3, 'FGH', $4), ($1, $2, $3, 'GHJ', $4)
 `
 
 type CreateAccountParams struct {
-	Owner    string `json:"owner"`
-	UserID   int64  `json:"user_id"`
-	Balance  int64  `json:"balance"`
-	Currency string `json:"currency"`
+	Owner     string    `json:"owner"`
+	UserID    int64     `json:"user_id"`
+	Balance   int64     `json:"balance"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount,
+func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) error {
+	_, err := q.db.ExecContext(ctx, createAccount,
 		arg.Owner,
 		arg.UserID,
 		arg.Balance,
-		arg.Currency,
+		arg.CreatedAt,
 	)
-	var i Account
-	err := row.Scan(
-		&i.ID,
-		&i.Owner,
-		&i.Balance,
-		&i.Currency,
-		&i.CreatedAt,
-		&i.UserID,
-	)
-	return i, err
+	return err
 }
 
 const deleteAccount = `-- name: DeleteAccount :exec

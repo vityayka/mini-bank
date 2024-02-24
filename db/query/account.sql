@@ -1,10 +1,10 @@
--- name: CreateAccount :one
+-- name: CreateAccount :exec
 INSERT INTO accounts (owner,
                       user_id,
                       balance,
-                      currency)
-VALUES ($1, $2, $3, $4)
-RETURNING *;
+                      currency, 
+                      created_at)
+VALUES ($1, $2, $3, 'USD', $4), ($1, $2, $3, 'EUR', $4), ($1, $2, $3, 'UAH', $4);
 
 -- name: GetUserAccount :one
 SELECT *

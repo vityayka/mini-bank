@@ -17,7 +17,7 @@ func RandomName() string {
 }
 
 func RandomEmail() string {
-	return fmt.Sprintf("%s@test.test", RandomString(6))
+	return fmt.Sprintf("%s@%s.%s", RandomString(6), RandomString(6), RandomString(3))
 }
 
 func RandomCurrency() string {
