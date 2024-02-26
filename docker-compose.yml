@@ -31,9 +31,12 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: bank
     volumes:
-      - ~/data/mini-bank/postgres/:/var/lib/postgresql/data/pgdata
+      - data:/var/lib/postgresql/data/pgdata
     healthcheck:
       test: pg_isready -U postgres
       interval: 5s
       timeout: 10s
       retries: 5
+
+volumes:
+  data:
