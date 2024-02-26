@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -41,7 +40,7 @@ func main() {
 }
 
 func populate(store db.Store) {
-	start, err := time.Parse(time.DateOnly, "2005-09-06")
+	start, err := time.Parse(time.DateOnly, "2007-10-08")
 	// now := time.Now()
 	if err != nil {
 		panic(err)
@@ -49,11 +48,21 @@ func populate(store db.Store) {
 
 	ctx := context.Background()
 
+	count := 0
+	prevCount := 0
+	go func() {
+		for {
+			time.Sleep(time.Second * 5)
+			fmt.Println("count per 5 sec = ", count-prevCount)
+			prevCount = count
+		}
+	}()
+
 	for date := start; true; date = date.Add(time.Hour) {
-		wg := sync.WaitGroup{}
+		// wg := sync.WaitGroup{}
 		for i := 0; i < 50; i++ {
-			wg.Add(1)
-			go func(date time.Time) {
+			// wg.Add(1)
+			func(date time.Time) {
 				username := utils.RandomString(32)
 				user, err := store.CreateUser(ctx, db.CreateUserParams{
 					Username:       username,
@@ -76,10 +85,11 @@ func populate(store db.Store) {
 				if err != nil {
 					panic(err)
 				}
-				fmt.Println("account created: ", date.String())
-				wg.Done()
+				// fmt.Println("account created: ", date.String())
+				count++
+				// wg.Done()
 			}(date)
-			wg.Wait()
 		}
+		// wg.Wait()
 	}
 }
