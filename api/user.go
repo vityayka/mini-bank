@@ -81,8 +81,11 @@ type loginUserRequest struct {
 }
 
 type loginUserResponse struct {
-	Token              string `json:"token"`
-	createUserResponse `json:"user"`
+	AccessToken           string    `json:"access_token"`
+	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
+	RefreshToken          string    `json:"refresh_token"`
+	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
+	createUserResponse    `json:"user"`
 }
 
 func (server *Server) loginUser(ctx *gin.Context) {
@@ -110,14 +113,33 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	token, err := server.tokenMaker.CreateToken(user.ID, time.Minute*30)
+	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.ID, server.config.AccessTokenDuration)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "wrong password"})
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
+	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.ID, server.config.RefreshTokenDuration)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	server.store.CreateSession(ctx, db.CreateSessionParams{
+		ID:           refreshPayload.ID,
+		UserID:       user.ID,
+		RefreshToken: refreshToken,
+		UserAgent:    ctx.Request.UserAgent(),
+		ClientIp:     ctx.ClientIP(),
+		IsBlocked:    false,
+		ExpiresAt:    time.Now().Add(server.config.RefreshTokenDuration),
+	})
+
 	rsp := loginUserResponse{
-		token,
+		accessToken,
+		accessPayload.ExpiresAt,
+		refreshToken,
+		refreshPayload.ExpiresAt,
 		createUserResponse{
 			ID:                user.ID,
 			Username:          user.Username,
@@ -127,8 +149,6 @@ func (server *Server) loginUser(ctx *gin.Context) {
 			CreatedAt:         user.CreatedAt,
 		},
 	}
-
-	log.Println("user_id", rsp.ID, rsp.Email)
 
 	ctx.JSON(http.StatusOK, rsp)
 }

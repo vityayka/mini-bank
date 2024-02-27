@@ -10,11 +10,12 @@ import (
 // Config stores all configuration of the application.
 // The values are read by viper from a config file or environment variable.
 type Config struct {
-	DBDriver            string        `mapstructure:"DB_DRIVER"`
-	DBSource            string        `mapstructure:"DB_SOURCE"`
-	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`
-	TokenSymmetricKey   string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
-	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	DBDriver             string        `mapstructure:"DB_DRIVER"`
+	DBSource             string        `mapstructure:"DB_SOURCE"`
+	ServerAddress        string        `mapstructure:"SERVER_ADDRESS"`
+	TokenSymmetricKey    string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
+	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 }
 
 // LoadConfig reads configuration from environment file or variables
@@ -43,6 +44,10 @@ func LoadConfig(path string) (config Config, err error) {
 		}
 		if accessTokenDuration, envVarExists := os.LookupEnv("ACCESS_TOKEN_DURATION"); envVarExists {
 			config.AccessTokenDuration, err = time.ParseDuration(accessTokenDuration)
+			return
+		}
+		if refreshTokenDuration, envVarExists := os.LookupEnv("REFRESH_TOKEN_DURATION"); envVarExists {
+			config.RefreshTokenDuration, err = time.ParseDuration(refreshTokenDuration)
 			return
 		}
 		return

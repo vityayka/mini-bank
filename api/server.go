@@ -14,6 +14,7 @@ type Server struct {
 	store      db.Store
 	router     *gin.Engine
 	tokenMaker token.Maker
+	config     *utils.Config
 }
 
 func NewServer(config utils.Config, store db.Store) (*Server, error) {
@@ -24,14 +25,15 @@ func NewServer(config utils.Config, store db.Store) (*Server, error) {
 	server := &Server{
 		store:      store,
 		tokenMaker: tokenMaker,
+		config:     &config,
 	}
 
-	server.setupRouter(tokenMaker)
+	server.setupRouter()
 
 	return server, nil
 }
 
-func (server *Server) setupRouter(tokenMaker token.Maker) {
+func (server *Server) setupRouter() {
 	router := gin.Default()
 
 	if validator, isOk := binding.Validator.Engine().(*validator.Validate); isOk {
@@ -40,8 +42,9 @@ func (server *Server) setupRouter(tokenMaker token.Maker) {
 
 	router.POST("/users", server.createUser)
 	router.POST("/users/login", server.loginUser)
+	router.POST("/token/renew", server.renewToken)
 
-	auth := router.Group("/", authMiddleware(tokenMaker))
+	auth := router.Group("/", authMiddleware(server.tokenMaker))
 	auth.POST("/accounts", server.createAccount)
 	auth.GET("/accounts/:id", server.getAccount)
 	auth.GET("/accounts", server.listAccounts)
