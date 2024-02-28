@@ -19,7 +19,7 @@ func createAccountForUser(t *testing.T, userID int64, currency string) (Account,
 	args := CreateAccountParams{
 		Owner:    utils.RandomName(),
 		UserID:   userID,
-		Balance:  utils.RandomMoney(),
+		Balance:  5000,
 		Currency: currency,
 	}
 

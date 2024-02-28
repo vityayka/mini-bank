@@ -80,6 +80,40 @@ func TestCreateTransferTx(t *testing.T) {
 	}
 }
 
+func TestCreateTransferTxInsufficientBalance(t *testing.T) {
+	store := NewDBStore(testDB)
+
+	acc1, _ := createRandAccount(t)
+	acc2, _ := createRandAccount(t)
+
+	amount := int64(1000)
+	cnt := 10
+
+	result := make(chan TransferTxResult)
+	errC := make(chan error)
+
+	for i := 0; i < cnt; i++ {
+		go func() {
+			res, err := store.TransferTx(context.Background(), TransferTxParams{
+				FromAccountID: acc1.ID,
+				ToAccountID:   acc2.ID,
+				Amount:        amount,
+			})
+			result <- res
+			errC <- err
+		}()
+	}
+
+	for i := 0; i < cnt; i++ {
+		res := <-result
+		err := <-errC
+		if err != nil { // error occurres when FromAccount reaches zero balanc
+			require.ErrorContains(t, err, "insufficient")
+			require.Equal(t, int(res.FromAccount.Balance), 0)
+		}
+	}
+}
+
 func TestCreateTransferTxDeadlock(t *testing.T) {
 	store := NewDBStore(testDB)
 

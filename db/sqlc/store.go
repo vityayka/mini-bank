@@ -35,6 +35,7 @@ func (store *DBStore) execTx(ctx context.Context, fn func(queries *Queries) erro
 		if rbErr := tx.Rollback(); rbErr != nil {
 			return fmt.Errorf("tx err: %v, rbErr: %v", err, rbErr)
 		}
+		return err
 	}
 
 	return tx.Commit()
@@ -59,6 +60,18 @@ func (store *DBStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tra
 
 	err := store.execTx(ctx, func(queries *Queries) error {
 		var err error
+
+		swapAccountsToPreventDeadlock(&arg)
+
+		fromAccount, err := queries.GetAccountForUpdate(ctx, arg.FromAccountID)
+		if err != nil {
+			return err
+		}
+		fmt.Println("fromacc.balance = ", fromAccount.Balance)
+		if fromAccount.Balance < arg.Amount {
+			result.FromAccount = fromAccount
+			return fmt.Errorf("insufficient funds")
+		}
 		result.Transfer, err = queries.CreateTransfer(ctx, CreateTransferParams(arg))
 		if err != nil {
 			return err
@@ -80,11 +93,7 @@ func (store *DBStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tra
 			return err
 		}
 
-		if arg.FromAccountID < arg.ToAccountID {
-			result.FromAccount, result.ToAccount, err = addMoney(queries, ctx, arg.FromAccountID, -arg.Amount, arg.ToAccountID, arg.Amount)
-		} else {
-			result.ToAccount, result.FromAccount, err = addMoney(queries, ctx, arg.ToAccountID, arg.Amount, arg.FromAccountID, -arg.Amount)
-		}
+		result.FromAccount, result.ToAccount, err = addMoney(queries, ctx, arg.FromAccountID, -arg.Amount, arg.ToAccountID, arg.Amount)
 		if err != nil {
 			return err
 		}
@@ -97,6 +106,13 @@ func (store *DBStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tra
 	}
 
 	return result, err
+}
+
+func swapAccountsToPreventDeadlock(arg *TransferTxParams) {
+	if arg.FromAccountID > arg.ToAccountID {
+		arg.FromAccountID, arg.ToAccountID = arg.ToAccountID, arg.FromAccountID
+		arg.Amount = -arg.Amount
+	}
 }
 
 func addMoney(

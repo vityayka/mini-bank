@@ -19,7 +19,7 @@ WHERE id = $1;
 -- name: GetAccountForUpdate :one
 SELECT *
 FROM accounts
-WHERE user_id = $1 and id = $2
+WHERE id = $1
 FOR NO KEY UPDATE;
 
 -- name: ListAccounts :many

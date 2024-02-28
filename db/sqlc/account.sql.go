@@ -101,17 +101,12 @@ func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
 const getAccountForUpdate = `-- name: GetAccountForUpdate :one
 SELECT id, owner, balance, currency, created_at, user_id
 FROM accounts
-WHERE user_id = $1 and id = $2
+WHERE id = $1
 FOR NO KEY UPDATE
 `
 
-type GetAccountForUpdateParams struct {
-	UserID int64 `json:"user_id"`
-	ID     int64 `json:"id"`
-}
-
-func (q *Queries) GetAccountForUpdate(ctx context.Context, arg GetAccountForUpdateParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getAccountForUpdate, arg.UserID, arg.ID)
+func (q *Queries) GetAccountForUpdate(ctx context.Context, id int64) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountForUpdate, id)
 	var i Account
 	err := row.Scan(
 		&i.ID,
