@@ -21,8 +21,7 @@ type createUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 }
 
-type createUserResponse struct {
-	ID                int64     `json:"id"`
+type userResponse struct {
 	Username          string    `json:"username"`
 	FullName          string    `json:"full_name"`
 	Email             string    `json:"email"`
@@ -63,8 +62,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	rsp := createUserResponse{
-		ID:                user.ID,
+	rsp := userResponse{
 		Username:          user.Username,
 		FullName:          user.FullName,
 		Email:             user.Email,
@@ -85,7 +83,7 @@ type loginUserResponse struct {
 	AccessTokenExpiresAt  time.Time `json:"access_token_expires_at"`
 	RefreshToken          string    `json:"refresh_token"`
 	RefreshTokenExpiresAt time.Time `json:"refresh_token_expires_at"`
-	createUserResponse    `json:"user"`
+	userResponse          `json:"user"`
 }
 
 func (server *Server) loginUser(ctx *gin.Context) {
@@ -140,8 +138,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		accessPayload.ExpiresAt,
 		refreshToken,
 		refreshPayload.ExpiresAt,
-		createUserResponse{
-			ID:                user.ID,
+		userResponse{
 			Username:          user.Username,
 			FullName:          user.FullName,
 			Email:             user.Email,
