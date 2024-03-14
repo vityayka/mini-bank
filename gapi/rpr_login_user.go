@@ -40,10 +40,13 @@ func (server *Server) LoginUser(ctx context.Context, r *pb.LoginUserRequest) (*p
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
+	meta := server.extractMedadata(ctx)
 	server.store.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		UserID:       user.ID,
 		RefreshToken: refreshToken,
+		UserAgent:    meta.UserAgent,
+		ClientIp:     meta.ClientIP,
 		IsBlocked:    false,
 		ExpiresAt:    time.Now().Add(server.config.RefreshTokenDuration),
 	})

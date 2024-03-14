@@ -1,21 +1,22 @@
 package main
 
 import (
-	"bank/api"
 	db "bank/db/sqlc"
 	"bank/gapi"
 	"bank/pb"
 	"bank/utils"
+	"context"
 	"database/sql"
 	"log"
 	"net"
+	"net/http"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 )
-
-const webPort string = "8080"
 
 func main() {
 	config, err := utils.LoadConfig(".")
@@ -34,6 +35,7 @@ func main() {
 	defer database.Close()
 
 	store := db.NewDBStore(database)
+	go runGatewayServer(config, store)
 	startGRPCerver(config, store)
 }
 
@@ -60,10 +62,45 @@ func startGRPCerver(config utils.Config, store db.Store) {
 	}
 }
 
-func startHTTPServer(config utils.Config, store db.Store) {
-	server, err := api.NewServer(config, store)
+func runGatewayServer(config utils.Config, store db.Store) {
+	server, err := gapi.NewServer(config, store)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("cannot create server:", err)
 	}
-	server.Serve(config.HTTPServerAddress)
+
+	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			UseProtoNames: true,
+		},
+		UnmarshalOptions: protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	})
+
+	grpcMux := runtime.NewServeMux(jsonOption)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = pb.RegisterBankHandlerServer(ctx, grpcMux, server)
+	if err != nil {
+		log.Fatal("cannot register handler server:", err)
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", grpcMux)
+
+	fs := http.FileServer(http.Dir("./doc/swagger"))
+	mux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
+
+	listener, err := net.Listen("tcp", config.HTTPServerAddress)
+	if err != nil {
+		log.Fatal("cannot create listener:", err)
+	}
+
+	log.Printf("start HTTP gateway server at %s", listener.Addr().String())
+	err = http.Serve(listener, mux)
+	if err != nil {
+		log.Fatal("cannot start HTTP gateway server:", err)
+	}
 }
