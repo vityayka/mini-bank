@@ -17,14 +17,7 @@ import (
 
 func (server *Server) CreateUser(ctx context.Context, r *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
 	if violations := validateCreateUserRequest(r); violations != nil {
-		badRequest := &errdetails.BadRequest{FieldViolations: violations}
-		statusInvalid := status.New(codes.InvalidArgument, "invalid params")
-
-		statusDetails, err := statusInvalid.WithDetails(badRequest)
-		if err != nil {
-			return nil, statusInvalid.Err()
-		}
-		return nil, statusDetails.Err()
+		return nil, validationError(violations)
 	}
 	hashedPassword, err := utils.HashedPassword(r.GetPassword())
 	if err != nil {

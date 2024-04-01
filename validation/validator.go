@@ -13,7 +13,7 @@ type ValidationError struct {
 
 var (
 	isUsernameValid = regexp.MustCompile(`^[a-z0-9_]+$`).MatchString
-	isFullNameValid = regexp.MustCompile(`^[a-zA-Z\\s]+$`).MatchString
+	isFullNameValid = regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString
 )
 
 func ValidateString(val string, minLength, maxLength int) error {
@@ -25,7 +25,10 @@ func ValidateString(val string, minLength, maxLength int) error {
 }
 
 func ValidatePassword(password string) *ValidationError {
-	return &ValidationError{ValidateString(password, 6, 72), "password"}
+	if err := ValidateString(password, 6, 72); err != nil {
+		return &ValidationError{err, "password"}
+	}
+	return nil
 }
 
 func ValidateUsername(username string) *ValidationError {

@@ -4,18 +4,23 @@ import (
 	db "bank/db/sqlc"
 	"bank/pb"
 	"bank/utils"
+	"bank/validation"
 	"context"
 	"database/sql"
 	"errors"
 	"log"
 	"time"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (server *Server) LoginUser(ctx context.Context, r *pb.LoginUserRequest) (*pb.LoginUserResponse, error) {
+	if violations := validateLoginUserRequest(r); violations != nil {
+		return nil, validationError(violations)
+	}
 	user, err := server.store.GetUserByEmail(ctx, r.GetEmail())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -58,4 +63,14 @@ func (server *Server) LoginUser(ctx context.Context, r *pb.LoginUserRequest) (*p
 		RefreshTokenExpiresAt: timestamppb.New(refreshPayload.ExpiresAt),
 		User:                  convertUser(user),
 	}, nil
+}
+
+func validateLoginUserRequest(r *pb.LoginUserRequest) (violations []*errdetails.BadRequest_FieldViolation) {
+	if valErr := validation.ValidateEmail(r.GetEmail()); valErr != nil {
+		violations = append(violations, fieldViolation(valErr.Field, valErr.Error))
+	}
+	if valErr := validation.ValidatePassword(r.GetPassword()); valErr != nil {
+		violations = append(violations, fieldViolation(valErr.Field, valErr.Error))
+	}
+	return violations
 }
