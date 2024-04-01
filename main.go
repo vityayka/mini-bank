@@ -7,10 +7,15 @@ import (
 	"bank/utils"
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"net"
 	"net/http"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
@@ -33,10 +38,27 @@ func main() {
 		log.Fatal(err)
 	}
 	defer database.Close()
+	migrateDB(config.MigrationURL, config.DBURI)
 
 	store := db.NewDBStore(database)
 	go runGatewayServer(config, store)
 	startGRPCerver(config, store)
+}
+
+func migrateDB(migrationURL, dbURI string) {
+	log.Println(dbURI)
+	log.Println(migrationURL)
+	migrator, err := migrate.New(migrationURL, dbURI)
+	if err != nil {
+		log.Fatal("failed to initialize the DB migrator:", err)
+	}
+	if err = migrator.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			log.Println("0 new migrations have run")
+		}
+		log.Fatal("failed to run the DB migration:", err)
+	}
+	log.Println("DB migrations ran successfully")
 }
 
 func startGRPCerver(config utils.Config, store db.Store) {

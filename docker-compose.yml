@@ -9,6 +9,7 @@ services:
     restart: always
     ports: 
       - "8080:8080"
+      - "5555:5555"
     env_file:
       - app.env
     depends_on:
