@@ -55,8 +55,10 @@ func migrateDB(migrationURL, dbURI string) {
 	if err = migrator.Up(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
 			log.Println("0 new migrations have run")
+			return
+		} else {
+			log.Fatal("failed to run the DB migration:", err)
 		}
-		log.Fatal("failed to run the DB migration:", err)
 	}
 	log.Println("DB migrations ran successfully")
 }

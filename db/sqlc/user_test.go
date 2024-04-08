@@ -3,6 +3,7 @@ package db
 import (
 	"bank/utils"
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 	"time"
@@ -51,4 +52,46 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, usr1.Email, usr2.Email)
 	require.Equal(t, usr1.ID, usr2.ID)
 	require.WithinDuration(t, usr1.CreatedAt, usr2.CreatedAt, time.Second)
+}
+
+func TestUpdateUserEmailOnly(t *testing.T) {
+	user, _ := createRandUser(t)
+
+	newEmail := utils.RandomEmail()
+
+	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		ID: user.ID,
+		Email: sql.NullString{
+			String: newEmail,
+			Valid:  true,
+		},
+	})
+
+	require.NoError(t, err)
+	require.NotEqual(t, updatedUser.Email, user.Email)
+	require.Equal(t, updatedUser.Email, newEmail)
+	require.Equal(t, user.FullName, updatedUser.FullName)
+	require.Equal(t, user.Username, updatedUser.Username)
+}
+
+func TestUpdateUserPasswordOnly(t *testing.T) {
+	user, _ := createRandUser(t)
+
+	hashedPassword, err := utils.HashedPassword(utils.RandomString(8))
+	require.NoError(t, err)
+
+	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+		ID: user.ID,
+		HashedPassword: sql.NullString{
+			String: hashedPassword,
+			Valid:  true,
+		},
+	})
+
+	require.NoError(t, err)
+	require.NotEqual(t, updatedUser.HashedPassword, user.HashedPassword)
+	require.Equal(t, updatedUser.Email, user.Email)
+	require.Equal(t, updatedUser.HashedPassword, hashedPassword)
+	require.Equal(t, user.FullName, updatedUser.FullName)
+	require.Equal(t, user.Username, updatedUser.Username)
 }
