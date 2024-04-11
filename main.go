@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bank/async"
 	db "bank/db/sqlc"
 	"bank/gapi"
 	"bank/pb"
@@ -8,9 +9,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 	"net"
 	"net/http"
+
+	"github.com/hibiken/asynq"
+	"github.com/rs/zerolog/log"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -26,70 +29,86 @@ import (
 func main() {
 	config, err := utils.LoadConfig(".")
 	if err != nil {
-		log.Fatal("cannot load config:", err)
+		log.Fatal().Err(err).Msg("cannot load config")
 	}
 
 	database, err := sql.Open(config.DBDriver, config.DBSource)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 	if err = database.Ping(); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 	defer database.Close()
 	migrateDB(config.MigrationURL, config.DBURI)
 
 	store := db.NewDBStore(database)
-	go runGatewayServer(config, store)
-	startGRPCerver(config, store)
+
+	redisOpt := asynq.RedisClientOpt{
+		Addr: config.RedisAddr,
+	}
+	taskDistributor := async.NewRedisTaskDistributor(redisOpt)
+
+	go runTaskProcessor(redisOpt, store)
+
+	go runGatewayServer(config, store, taskDistributor)
+	startGRPCerver(config, store, taskDistributor)
+}
+
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+	taskProcessor := async.NewRedisTaskProcessor(redisOpt, store)
+	if err := taskProcessor.Start(); err != nil {
+		log.Fatal().Err(err)
+	}
 }
 
 func migrateDB(migrationURL, dbURI string) {
-	log.Println(dbURI)
-	log.Println(migrationURL)
+	log.Info().Msg(dbURI)
+	log.Info().Msg(migrationURL)
 	migrator, err := migrate.New(migrationURL, dbURI)
 	if err != nil {
-		log.Fatal("failed to initialize the DB migrator:", err)
+		log.Fatal().Err(err).Msg("failed to initialize the DB migrator")
 	}
 	if err = migrator.Up(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
-			log.Println("0 new migrations have run")
+			log.Info().Msgf("0 new migrations have run \n")
 			return
 		} else {
-			log.Fatal("failed to run the DB migration:", err)
+			log.Fatal().Err(err).Msg("failed to run the DB migration")
 		}
 	}
-	log.Println("DB migrations ran successfully")
+	log.Info().Msgf("DB migrations ran successfully \n")
 }
 
-func startGRPCerver(config utils.Config, store db.Store) {
-	server, err := gapi.NewServer(config, store)
+func startGRPCerver(config utils.Config, store db.Store, taskDistributor async.TaskDistrubutor) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Send()
 	}
 
-	grpcServer := grpc.NewServer()
+	logger := grpc.UnaryInterceptor(gapi.GRPCLogger)
+	grpcServer := grpc.NewServer(logger)
 
 	pb.RegisterBankServer(grpcServer, server)
 	reflection.Register(grpcServer)
 	listener, err := net.Listen("tcp", config.GRPCServerAddress)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Send()
 	}
 	defer listener.Close()
-	log.Printf("starting grpc server at %s", listener.Addr().String())
+	log.Info().Msgf("starting grpc server at %s", listener.Addr().String())
 
 	err = grpcServer.Serve(listener)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Send()
 	}
 }
 
-func runGatewayServer(config utils.Config, store db.Store) {
-	server, err := gapi.NewServer(config, store)
+func runGatewayServer(config utils.Config, store db.Store, taskDistributor async.TaskDistrubutor) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
 	if err != nil {
-		log.Fatal("cannot create server:", err)
+		log.Fatal().Err(err).Msg("cannot create server")
 	}
 
 	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
@@ -108,7 +127,7 @@ func runGatewayServer(config utils.Config, store db.Store) {
 
 	err = pb.RegisterBankHandlerServer(ctx, grpcMux, server)
 	if err != nil {
-		log.Fatal("cannot register handler server:", err)
+		log.Fatal().Err(err).Msg("cannot register handler server")
 	}
 
 	mux := http.NewServeMux()
@@ -120,12 +139,12 @@ func runGatewayServer(config utils.Config, store db.Store) {
 
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
-		log.Fatal("cannot create listener:", err)
+		log.Fatal().Err(err).Msg("cannot create listener")
 	}
 
-	log.Printf("start HTTP gateway server at %s", listener.Addr().String())
-	err = http.Serve(listener, mux)
+	log.Info().Msgf("start HTTP gateway server at %s", listener.Addr().String())
+	err = http.Serve(listener, gapi.HTTPLogger(mux))
 	if err != nil {
-		log.Fatal("cannot start HTTP gateway server:", err)
+		log.Fatal().Err(err).Msg("cannot start HTTP gateway server")
 	}
 }

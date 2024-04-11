@@ -1,6 +1,7 @@
 package gapi
 
 import (
+	"bank/async"
 	db "bank/db/sqlc"
 	"bank/pb"
 	"bank/utils"
@@ -8,8 +9,9 @@ import (
 	"context"
 	"errors"
 	"log"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/hibiken/asynq"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,10 +33,25 @@ func (server *Server) CreateUser(ctx context.Context, r *pb.CreateUserRequest) (
 		Email:          r.GetEmail(),
 	}
 
-	user, err := server.store.CreateUser(ctx, arg)
+	result, err := server.store.CreateUserTX(ctx, db.CreateUserTxParams{
+		CreateUserParams: arg,
+		AfterCreate: func(user db.User) error {
+			payload := &async.PayloadSendVerifyEmail{UserID: user.ID}
+			opts := []asynq.Option{
+				asynq.ProcessIn(10 * time.Second),
+				asynq.MaxRetry(5),
+				// asynq.Queue("critical"),
+			}
+			if err = server.taskDistributor.DistributeTaskVerifyEmail(ctx, payload, opts...); err != nil {
+				return status.Errorf(codes.Internal, err.Error())
+			}
+
+			return nil
+		},
+	})
+
 	if err != nil {
-		var pgError *pgconn.PgError
-		if errors.As(err, &pgError) && pgError.Code == "23505" {
+		if errors.Is(err, db.ErrUserAlreadyExists) {
 			return nil, status.Errorf(codes.AlreadyExists, "user already exists")
 		}
 		log.Println(err)
@@ -42,7 +59,7 @@ func (server *Server) CreateUser(ctx context.Context, r *pb.CreateUserRequest) (
 	}
 
 	return &pb.CreateUserResponse{
-		User: convertUser(user),
+		User: convertUser(result.User),
 	}, nil
 }
 

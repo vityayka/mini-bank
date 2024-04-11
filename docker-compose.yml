@@ -19,6 +19,12 @@ services:
     volumes:
       - ./app.env:/app/app.env
 
+  redis:
+    image: 'redis:alpine'
+    restart: always
+    ports:
+      - "6379:6379"
+      
   db:
     image: 'postgres'
     ports:
