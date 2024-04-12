@@ -21,7 +21,7 @@ type CreateUserTxResult struct {
 func (store *DBStore) CreateUserTX(ctx context.Context, arg CreateUserTxParams) (CreateUserTxResult, error) {
 	var result CreateUserTxResult
 	err := store.execTx(ctx, func(queries *Queries) error {
-		user, err := store.CreateUser(ctx, arg.CreateUserParams)
+		user, err := queries.CreateUser(ctx, arg.CreateUserParams)
 		if err != nil {
 			var pgError *pgconn.PgError
 			if errors.As(err, &pgError) && pgError.Code == "23505" {
