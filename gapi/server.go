@@ -13,10 +13,10 @@ type Server struct {
 	store           db.Store
 	tokenMaker      token.Maker
 	config          *utils.Config
-	taskDistributor async.TaskDistrubutor
+	taskDistributor async.TaskDistributor
 }
 
-func NewServer(config utils.Config, store db.Store, taskDistributor async.TaskDistrubutor) (*Server, error) {
+func NewServer(config utils.Config, store db.Store, taskDistributor async.TaskDistributor) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
 		return nil, err

@@ -81,7 +81,7 @@ func migrateDB(migrationURL, dbURI string) {
 	log.Info().Msgf("DB migrations ran successfully \n")
 }
 
-func startGRPCerver(config utils.Config, store db.Store, taskDistributor async.TaskDistrubutor) {
+func startGRPCerver(config utils.Config, store db.Store, taskDistributor async.TaskDistributor) {
 	server, err := gapi.NewServer(config, store, taskDistributor)
 	if err != nil {
 		log.Fatal().Err(err).Send()
@@ -105,7 +105,7 @@ func startGRPCerver(config utils.Config, store db.Store, taskDistributor async.T
 	}
 }
 
-func runGatewayServer(config utils.Config, store db.Store, taskDistributor async.TaskDistrubutor) {
+func runGatewayServer(config utils.Config, store db.Store, taskDistributor async.TaskDistributor) {
 	server, err := gapi.NewServer(config, store, taskDistributor)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")

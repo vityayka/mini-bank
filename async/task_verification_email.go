@@ -17,7 +17,7 @@ type PayloadSendVerifyEmail struct {
 	UserID int64 `json:"user_id"`
 }
 
-// DistributeTaskVerifyEmail implements TaskDistrubutor.
+// DistributeTaskVerifyEmail implements TaskDistributor.
 func (r *RedisTaskDistributor) DistributeTaskVerifyEmail(ctx context.Context, payload *PayloadSendVerifyEmail, opt ...asynq.Option) error {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {

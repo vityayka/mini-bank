@@ -14,7 +14,7 @@ sqlc:
 	sqlc generate
 
 test:
-	go test -cover ./...
+	go test -cover -short ./...
 
 mock:
 	mockgen -package mockdb -destination db/mock/store.go bank/db/sqlc Store

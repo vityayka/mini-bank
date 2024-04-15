@@ -20,6 +20,9 @@ type Config struct {
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 	RedisAddr            string        `mapstructure:"REDIS_ADDR"`
+	GmailName            string        `mapstructure:"GMAIL_NAME"`
+	GmailFrom            string        `mapstructure:"GMAIL_FROM"`
+	GmailAccPassword     string        `mapstructure:"GMAIL_APP_PASSWORD"`
 }
 
 // LoadConfig reads configuration from environment file or variables

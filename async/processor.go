@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/hibiken/asynq"
+	"github.com/rs/zerolog/log"
 )
 
 type TaskProcessor interface {
@@ -27,7 +28,15 @@ func (r *RedisTaskProcessor) Start() error {
 
 func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) TaskProcessor {
 	return &RedisTaskProcessor{
-		server: asynq.NewServer(redisOpt, asynq.Config{}),
-		store:  store,
+		server: asynq.NewServer(redisOpt, asynq.Config{
+			ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
+				log.Err(err).
+					Str("task_type", task.Type()).
+					Bytes("payload", task.Payload()).
+					Msg("error_processing_task")
+			}),
+			Logger: &Logger{},
+		}),
+		store: store,
 	}
 }
