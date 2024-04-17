@@ -2,6 +2,7 @@ package async
 
 import (
 	db "bank/db/sqlc"
+	"bank/mail"
 	"context"
 
 	"github.com/hibiken/asynq"
@@ -14,8 +15,9 @@ type TaskProcessor interface {
 }
 
 type RedisTaskProcessor struct {
-	server *asynq.Server
-	store  db.Store
+	server     *asynq.Server
+	store      db.Store
+	mailSender mail.EmailSender
 }
 
 func (r *RedisTaskProcessor) Start() error {
@@ -26,7 +28,7 @@ func (r *RedisTaskProcessor) Start() error {
 	return r.server.Start(mux)
 }
 
-func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) TaskProcessor {
+func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store, mailSender mail.EmailSender) TaskProcessor {
 	return &RedisTaskProcessor{
 		server: asynq.NewServer(redisOpt, asynq.Config{
 			ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
@@ -37,6 +39,7 @@ func NewRedisTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) TaskPr
 			}),
 			Logger: &Logger{},
 		}),
-		store: store,
+		store:      store,
+		mailSender: mailSender,
 	}
 }

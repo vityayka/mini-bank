@@ -4,6 +4,7 @@ import (
 	"bank/async"
 	db "bank/db/sqlc"
 	"bank/gapi"
+	"bank/mail"
 	"bank/pb"
 	"bank/utils"
 	"context"
@@ -50,14 +51,15 @@ func main() {
 	}
 	taskDistributor := async.NewRedisTaskDistributor(redisOpt)
 
-	go runTaskProcessor(redisOpt, store)
+	go runTaskProcessor(config, redisOpt, store)
 
 	go runGatewayServer(config, store, taskDistributor)
 	startGRPCerver(config, store, taskDistributor)
 }
 
-func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
-	taskProcessor := async.NewRedisTaskProcessor(redisOpt, store)
+func runTaskProcessor(config utils.Config, redisOpt asynq.RedisClientOpt, store db.Store) {
+	mailSender := mail.NewGmailSender(config.GmailName, config.GmailFrom, config.GmailAccPassword)
+	taskProcessor := async.NewRedisTaskProcessor(redisOpt, store, mailSender)
 	if err := taskProcessor.Start(); err != nil {
 		log.Fatal().Err(err)
 	}

@@ -18,10 +18,10 @@ WHERE email = $1;
 
 -- name: UpdateUser :one
 UPDATE users
-SET sqlc.narg(hashed_password)
-    hashed_password = COALESCE(sqlc.narg(hashed_password), hashed_password),
+SET hashed_password = COALESCE(sqlc.narg(hashed_password), hashed_password),
     full_name = COALESCE(sqlc.narg(full_name), full_name),
     email = COALESCE(sqlc.narg(email), email),
+    is_verified = COALESCE(sqlc.narg(is_verified), is_verified),
     password_changed_at = (CASE WHEN sqlc.narg(hashed_password) IS null THEN password_changed_at ELSE now() END)
 WHERE id = sqlc.arg(id)
 RETURNING *;

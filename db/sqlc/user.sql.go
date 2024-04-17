@@ -16,7 +16,7 @@ INSERT INTO users (username,
                       full_name,
                       email)
 VALUES ($1, $2, $3, $4)
-RETURNING id, username, hashed_password, full_name, email, password_changed_at, created_at
+RETURNING id, username, hashed_password, full_name, email, password_changed_at, created_at, is_verified
 `
 
 type CreateUserParams struct {
@@ -42,12 +42,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, username, hashed_password, full_name, email, password_changed_at, created_at
+SELECT id, username, hashed_password, full_name, email, password_changed_at, created_at, is_verified
 FROM users
 WHERE id = $1
 `
@@ -63,12 +64,13 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.Email,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, hashed_password, full_name, email, password_changed_at, created_at
+SELECT id, username, hashed_password, full_name, email, password_changed_at, created_at, is_verified
 FROM users
 WHERE email = $1
 `
@@ -84,25 +86,27 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Email,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
 }
 
 const updateUser = `-- name: UpdateUser :one
 UPDATE users
-SET 
-    hashed_password = COALESCE($1, hashed_password),
+SET hashed_password = COALESCE($1, hashed_password),
     full_name = COALESCE($2, full_name),
     email = COALESCE($3, email),
+    is_verified = COALESCE($4, is_verified),
     password_changed_at = (CASE WHEN $1 IS null THEN password_changed_at ELSE now() END)
-WHERE id = $4
-RETURNING id, username, hashed_password, full_name, email, password_changed_at, created_at
+WHERE id = $5
+RETURNING id, username, hashed_password, full_name, email, password_changed_at, created_at, is_verified
 `
 
 type UpdateUserParams struct {
 	HashedPassword sql.NullString `json:"hashed_password"`
 	FullName       sql.NullString `json:"full_name"`
 	Email          sql.NullString `json:"email"`
+	IsVerified     sql.NullBool   `json:"is_verified"`
 	ID             int64          `json:"id"`
 }
 
@@ -111,6 +115,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		arg.HashedPassword,
 		arg.FullName,
 		arg.Email,
+		arg.IsVerified,
 		arg.ID,
 	)
 	var i User
@@ -122,6 +127,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.Email,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.IsVerified,
 	)
 	return i, err
 }

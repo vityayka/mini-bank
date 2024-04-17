@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package pb;
+
+import "user.proto";
+
+option go_package = "/pb";
+
+message VerifyEmailRequest {
+  int64 id = 1;
+  string code = 2;
+}
+
+message VerifyEmailResponse {
+  User user = 1;
+}
