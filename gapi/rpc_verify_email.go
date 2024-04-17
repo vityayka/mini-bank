@@ -32,10 +32,15 @@ func (server *Server) VerifyEmail(ctx context.Context, r *pb.VerifyEmailRequest)
 		return nil, status.Errorf(codes.PermissionDenied, "verification code expired")
 	}
 
-	server.store.UpdateVerifyEmails(ctx, db.UpdateVerifyEmailsParams{
+	err = server.store.UpdateVerifyEmails(ctx, db.UpdateVerifyEmailsParams{
 		ID:     verifyEmail.ID,
 		IsUsed: true,
 	})
+
+	if err != nil {
+		log.Err(err).Msg("update_verify_emails_failed")
+		return nil, status.Errorf(codes.Internal, "something went wrong")
+	}
 
 	user, err := server.store.UpdateUser(ctx, db.UpdateUserParams{
 		ID: verifyEmail.UserID,

@@ -68,7 +68,7 @@ func (r *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Context, tas
 		return fmt.Errorf("failed to create verify_email: %w", err)
 	}
 
-	link := fmt.Sprintf("http://localhost:8080/verify_email?id=%d&code=%s", verifyEmail.ID, verifyEmail.Code)
+	link := fmt.Sprintf("http://localhost:8080/v1/verify_email?id=%d&code=%s", verifyEmail.ID, verifyEmail.Code)
 	err = r.mailSender.Send(
 		"Verify email",
 		fmt.Sprintf("Thanks for signing up! Please follow the <a href=\"%s\">link</a> to verify", link),
