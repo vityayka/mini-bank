@@ -21,6 +21,7 @@ test:
 
 mock:
 	mockgen -package mockdb -destination db/mock/store.go bank/db/sqlc Store
+	mockgen -package async -destination async/mock/distributor.go bank/async TaskDistributor
 
 proto:
 	rm -f pb/*.go
