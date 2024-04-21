@@ -3,9 +3,9 @@ package db
 import (
 	"bank/utils"
 	"context"
-	"database/sql"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func newCreateEntryParams(account Account) CreateEntryParams {
@@ -16,7 +16,7 @@ func newCreateEntryParams(account Account) CreateEntryParams {
 }
 
 func createNewEntry(t *testing.T, args CreateEntryParams) Entry {
-	entry, err := testQueries.CreateEntry(context.Background(), args)
+	entry, err := testStore.CreateEntry(context.Background(), args)
 
 	require.NoError(t, err)
 	return entry
@@ -38,7 +38,7 @@ func TestGetEntry(t *testing.T) {
 	account, _ := createRandAccount(t)
 	args := newCreateEntryParams(account)
 	entry1 := createNewEntry(t, args)
-	entry2, err := testQueries.GetEntry(context.Background(), entry1.ID)
+	entry2, err := testStore.GetEntry(context.Background(), entry1.ID)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, entry2)
@@ -58,7 +58,7 @@ func TestUpdateEntry(t *testing.T) {
 		Amount: utils.RandomMoney(),
 	}
 
-	uEntry, err := testQueries.UpdateEntry(context.Background(), uArgs)
+	uEntry, err := testStore.UpdateEntry(context.Background(), uArgs)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, uEntry)
@@ -73,13 +73,13 @@ func TestDeleteEntry(t *testing.T) {
 	args := newCreateEntryParams(account)
 	entry := createNewEntry(t, args)
 
-	err := testQueries.DeleteEntry(context.Background(), entry.ID)
+	err := testStore.DeleteEntry(context.Background(), entry.ID)
 
 	require.NoError(t, err)
 
-	entry1, err := testQueries.GetEntry(context.Background(), entry.ID)
+	entry1, err := testStore.GetEntry(context.Background(), entry.ID)
 
-	require.ErrorIs(t, sql.ErrNoRows, err)
+	require.ErrorContains(t, err, "no rows")
 	require.Empty(t, entry1)
 }
 
@@ -90,7 +90,7 @@ func TestListEntries(t *testing.T) {
 		createNewEntry(t, newCreateEntryParams(acc))
 	}
 
-	entries, err := testQueries.ListEntries(context.Background(), ListEntriesParams{
+	entries, err := testStore.ListEntries(context.Background(), ListEntriesParams{
 		Limit:  5,
 		Offset: 5,
 	})

@@ -3,11 +3,11 @@ package db
 import (
 	"bank/utils"
 	"context"
-	"database/sql"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func createRandUser(t *testing.T) (User, CreateUserParams) {
 		FullName:       fmt.Sprintf("%s %s", utils.RandomName(), utils.RandomName()),
 	}
 
-	user, err := testQueries.CreateUser(context.Background(), args)
+	user, err := testStore.CreateUser(context.Background(), args)
 	require.NoError(t, err)
 	require.NotEmpty(t, user)
 
@@ -43,7 +43,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 	usr1, _ := createRandUser(t)
-	usr2, err := testQueries.GetUser(context.Background(), usr1.ID)
+	usr2, err := testStore.GetUser(context.Background(), usr1.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, usr2)
 
@@ -59,9 +59,9 @@ func TestUpdateUserEmailOnly(t *testing.T) {
 
 	newEmail := utils.RandomEmail()
 
-	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+	updatedUser, err := testStore.UpdateUser(context.Background(), UpdateUserParams{
 		ID: user.ID,
-		Email: sql.NullString{
+		Email: pgtype.Text{
 			String: newEmail,
 			Valid:  true,
 		},
@@ -80,9 +80,9 @@ func TestUpdateUserPasswordOnly(t *testing.T) {
 	hashedPassword, err := utils.HashedPassword(utils.RandomString(8))
 	require.NoError(t, err)
 
-	updatedUser, err := testQueries.UpdateUser(context.Background(), UpdateUserParams{
+	updatedUser, err := testStore.UpdateUser(context.Background(), UpdateUserParams{
 		ID: user.ID,
-		HashedPassword: sql.NullString{
+		HashedPassword: pgtype.Text{
 			String: hashedPassword,
 			Valid:  true,
 		},

@@ -8,7 +8,6 @@ import (
 	"bank/pb"
 	"bank/utils"
 	"context"
-	"database/sql"
 	"errors"
 	"net"
 	"net/http"
@@ -21,7 +20,7 @@ import (
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -33,18 +32,19 @@ func main() {
 		log.Fatal().Err(err).Msg("cannot load config")
 	}
 
-	database, err := sql.Open(config.DBDriver, config.DBSource)
+	ctx := context.Background()
+	connPool, err := pgxpool.New(ctx, config.DBSource)
 
 	if err != nil {
 		log.Fatal().Err(err)
 	}
-	if err = database.Ping(); err != nil {
+	if err = connPool.Ping(ctx); err != nil {
 		log.Fatal().Err(err)
 	}
-	defer database.Close()
+	defer connPool.Close()
 	migrateDB(config.MigrationURL, config.DBURI)
 
-	store := db.NewDBStore(database)
+	store := db.NewDBStore(connPool)
 
 	redisOpt := asynq.RedisClientOpt{
 		Addr: config.RedisAddr,

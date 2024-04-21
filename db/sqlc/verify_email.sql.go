@@ -30,7 +30,7 @@ type CreateVerifyEmailParams struct {
 }
 
 func (q *Queries) CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error) {
-	row := q.db.QueryRowContext(ctx, createVerifyEmail,
+	row := q.db.QueryRow(ctx, createVerifyEmail,
 		arg.UserID,
 		arg.Email,
 		arg.Code,
@@ -57,7 +57,7 @@ WHERE id = $1
 `
 
 func (q *Queries) GetVerifyEmail(ctx context.Context, id int64) (VerifyEmail, error) {
-	row := q.db.QueryRowContext(ctx, getVerifyEmail, id)
+	row := q.db.QueryRow(ctx, getVerifyEmail, id)
 	var i VerifyEmail
 	err := row.Scan(
 		&i.ID,
@@ -83,6 +83,6 @@ type UpdateVerifyEmailsParams struct {
 }
 
 func (q *Queries) UpdateVerifyEmails(ctx context.Context, arg UpdateVerifyEmailsParams) error {
-	_, err := q.db.ExecContext(ctx, updateVerifyEmails, arg.IsUsed, arg.ID)
+	_, err := q.db.Exec(ctx, updateVerifyEmails, arg.IsUsed, arg.ID)
 	return err
 }

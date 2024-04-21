@@ -7,7 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -27,7 +28,7 @@ type CreateUserParams struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser,
+	row := q.db.QueryRow(ctx, createUser,
 		arg.Username,
 		arg.HashedPassword,
 		arg.FullName,
@@ -54,7 +55,7 @@ WHERE id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUser, id)
+	row := q.db.QueryRow(ctx, getUser, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -76,7 +77,7 @@ WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -103,15 +104,15 @@ RETURNING id, username, hashed_password, full_name, email, password_changed_at, 
 `
 
 type UpdateUserParams struct {
-	HashedPassword sql.NullString `json:"hashed_password"`
-	FullName       sql.NullString `json:"full_name"`
-	Email          sql.NullString `json:"email"`
-	IsVerified     sql.NullBool   `json:"is_verified"`
-	ID             int64          `json:"id"`
+	HashedPassword pgtype.Text `json:"hashed_password"`
+	FullName       pgtype.Text `json:"full_name"`
+	Email          pgtype.Text `json:"email"`
+	IsVerified     pgtype.Bool `json:"is_verified"`
+	ID             int64       `json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateUser,
+	row := q.db.QueryRow(ctx, updateUser,
 		arg.HashedPassword,
 		arg.FullName,
 		arg.Email,

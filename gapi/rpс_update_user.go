@@ -10,6 +10,7 @@ import (
 	"errors"
 	"log"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,8 +27,8 @@ func (server *Server) UpdateUser(ctx context.Context, r *pb.UpdateUserRequest) (
 
 	arg := db.UpdateUserParams{
 		ID:       authPayload.UserID,
-		FullName: sql.NullString{String: r.GetFullName(), Valid: r.FullName != nil},
-		Email:    sql.NullString{String: r.GetEmail(), Valid: r.Email != nil},
+		FullName: pgtype.Text{String: r.GetFullName(), Valid: r.FullName != nil},
+		Email:    pgtype.Text{String: r.GetEmail(), Valid: r.Email != nil},
 	}
 
 	if r.Password != nil {
@@ -35,7 +36,7 @@ func (server *Server) UpdateUser(ctx context.Context, r *pb.UpdateUserRequest) (
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "couldn't hash password")
 		}
-		arg.HashedPassword = sql.NullString{String: hashedPassword, Valid: true}
+		arg.HashedPassword = pgtype.Text{String: hashedPassword, Valid: true}
 	}
 
 	user, err := server.store.UpdateUser(ctx, arg)

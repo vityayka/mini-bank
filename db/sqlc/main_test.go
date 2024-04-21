@@ -2,16 +2,16 @@ package db
 
 import (
 	"bank/utils"
-	"database/sql"
+	"context"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-var testQueries *Queries
-var testDB *sql.DB
+var testStore Store
 
 func TestMain(m *testing.M) {
 	var err error
@@ -20,16 +20,16 @@ func TestMain(m *testing.M) {
 		log.Fatal("cannot load config:", err)
 	}
 
-	testDB, err = sql.Open(config.DBDriver, config.DBSource)
-	defer testDB.Close()
+	ctx := context.Background()
+	connPool, err := pgxpool.New(ctx, config.DBSource)
 	if err != nil {
 		log.Fatal("couldn't connect to DB", err)
 	}
-	if err = testDB.Ping(); err != nil {
+	if err = connPool.Ping(ctx); err != nil {
 		log.Fatal("couldn't connect to DB", err)
 	}
 
-	testQueries = New(testDB)
+	testStore = NewDBStore(connPool)
 
 	os.Exit(m.Run())
 }

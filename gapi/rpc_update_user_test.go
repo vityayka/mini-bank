@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
@@ -37,8 +38,8 @@ func TestUpdateUser(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.UpdateUserParams{
 					ID:       user.ID,
-					FullName: sql.NullString{String: newName, Valid: true},
-					Email:    sql.NullString{String: newEmail, Valid: true},
+					FullName: pgtype.Text{String: newName, Valid: true},
+					Email:    pgtype.Text{String: newEmail, Valid: true},
 				}
 
 				updatedUser := db.User{
@@ -106,8 +107,8 @@ func TestUpdateUser(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.UpdateUserParams{
 					ID:       user.ID,
-					FullName: sql.NullString{String: newName, Valid: true},
-					Email:    sql.NullString{String: newEmail, Valid: true},
+					FullName: pgtype.Text{String: newName, Valid: true},
+					Email:    pgtype.Text{String: newEmail, Valid: true},
 				}
 
 				store.EXPECT().
@@ -132,8 +133,8 @@ func TestUpdateUser(t *testing.T) {
 			buildStubs: func(store *mockdb.MockStore) {
 				args := db.UpdateUserParams{
 					ID:       user.ID,
-					FullName: sql.NullString{String: newName, Valid: true},
-					Email:    sql.NullString{String: newEmail, Valid: true},
+					FullName: pgtype.Text{String: newName, Valid: true},
+					Email:    pgtype.Text{String: newEmail, Valid: true},
 				}
 
 				store.EXPECT().

@@ -4,9 +4,9 @@ import (
 	db "bank/db/sqlc"
 	"bank/pb"
 	"context"
-	"database/sql"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -44,7 +44,7 @@ func (server *Server) VerifyEmail(ctx context.Context, r *pb.VerifyEmailRequest)
 
 	user, err := server.store.UpdateUser(ctx, db.UpdateUserParams{
 		ID: verifyEmail.UserID,
-		IsVerified: sql.NullBool{
+		IsVerified: pgtype.Bool{
 			Bool:  true,
 			Valid: true,
 		},

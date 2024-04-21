@@ -3,7 +3,6 @@ package db
 import (
 	"bank/utils"
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -23,7 +22,7 @@ func createAccountForUser(t *testing.T, userID int64, currency string) (Account,
 		Currency: currency,
 	}
 
-	account, err := testQueries.CreateAccount(context.Background(), args)
+	account, err := testStore.CreateAccount(context.Background(), args)
 	require.NoError(t, err)
 	require.NotEmpty(t, account)
 
@@ -43,7 +42,7 @@ func TestCreateAccount(t *testing.T) {
 
 func TestGetAccount(t *testing.T) {
 	acc1, _ := createRandAccount(t)
-	acc2, err := testQueries.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
+	acc2, err := testStore.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
 	require.NoError(t, err)
 	require.NotEmpty(t, acc2)
 
@@ -61,7 +60,7 @@ func TestUpdateAccount(t *testing.T) {
 		ID:      acc1.ID,
 		Balance: utils.RandomMoney(),
 	}
-	acc2, err := testQueries.UpdateAccount(context.Background(), args)
+	acc2, err := testStore.UpdateAccount(context.Background(), args)
 
 	require.NoError(t, err)
 	require.NotEmpty(t, acc2)
@@ -75,14 +74,14 @@ func TestUpdateAccount(t *testing.T) {
 
 func TestDeleteAccount(t *testing.T) {
 	acc1, _ := createRandAccount(t)
-	err := testQueries.DeleteAccount(context.Background(), acc1.ID)
+	err := testStore.DeleteAccount(context.Background(), acc1.ID)
 
 	require.NoError(t, err)
 
-	acc2, err := testQueries.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
+	acc2, err := testStore.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
 
 	require.Empty(t, acc2)
-	require.ErrorIs(t, sql.ErrNoRows, err)
+	require.ErrorContains(t, err, "no rows")
 }
 
 func TestListAccounts(t *testing.T) {
@@ -93,7 +92,7 @@ func TestListAccounts(t *testing.T) {
 		createAccountForUser(t, user.ID, currency)
 	}
 
-	accounts, err := testQueries.ListAccounts(context.Background(), ListAccountsParams{
+	accounts, err := testStore.ListAccounts(context.Background(), ListAccountsParams{
 		UserID: user.ID,
 		Limit:  5,
 		Offset: 0,

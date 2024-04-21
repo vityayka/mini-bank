@@ -8,8 +8,6 @@ import (
 )
 
 func TestCreateTransferTx(t *testing.T) {
-	store := NewDBStore(testDB)
-
 	acc1, _ := createRandAccount(t)
 	acc2, _ := createRandAccount(t)
 
@@ -21,7 +19,7 @@ func TestCreateTransferTx(t *testing.T) {
 
 	for i := 0; i < cnt; i++ {
 		go func() {
-			res, err := store.TransferTx(context.Background(), TransferTxParams{
+			res, err := testStore.TransferTx(context.Background(), TransferTxParams{
 				FromAccountID: acc1.ID,
 				ToAccountID:   acc2.ID,
 				Amount:        amount,
@@ -48,14 +46,14 @@ func TestCreateTransferTx(t *testing.T) {
 		require.NotEmpty(t, res.ToEntry.ID)
 		require.NotEmpty(t, res.FromEntry.ID)
 
-		_, err = testQueries.GetEntry(context.Background(), res.FromEntry.ID)
+		_, err = testStore.GetEntry(context.Background(), res.FromEntry.ID)
 		require.NoError(t, err)
 
-		_, err = testQueries.GetEntry(context.Background(), res.ToEntry.ID)
+		_, err = testStore.GetEntry(context.Background(), res.ToEntry.ID)
 		require.NoError(t, err)
 
 		// check transfer
-		_, err = testQueries.GetTransfer(context.Background(), res.Transfer.ID)
+		_, err = testStore.GetTransfer(context.Background(), res.Transfer.ID)
 		require.NoError(t, err)
 
 		require.Equal(t, res.Transfer.Amount, res.ToEntry.Amount)
@@ -81,8 +79,6 @@ func TestCreateTransferTx(t *testing.T) {
 }
 
 func TestCreateTransferTxInsufficientBalance(t *testing.T) {
-	store := NewDBStore(testDB)
-
 	acc1, _ := createRandAccount(t)
 	acc2, _ := createRandAccount(t)
 
@@ -94,7 +90,7 @@ func TestCreateTransferTxInsufficientBalance(t *testing.T) {
 
 	for i := 0; i < cnt; i++ {
 		go func() {
-			res, err := store.TransferTx(context.Background(), TransferTxParams{
+			res, err := testStore.TransferTx(context.Background(), TransferTxParams{
 				FromAccountID: acc1.ID,
 				ToAccountID:   acc2.ID,
 				Amount:        amount,
@@ -115,8 +111,6 @@ func TestCreateTransferTxInsufficientBalance(t *testing.T) {
 }
 
 func TestCreateTransferTxDeadlock(t *testing.T) {
-	store := NewDBStore(testDB)
-
 	acc1, _ := createRandAccount(t)
 	acc2, _ := createRandAccount(t)
 
@@ -132,7 +126,7 @@ func TestCreateTransferTxDeadlock(t *testing.T) {
 		}
 
 		go func() {
-			_, err := store.TransferTx(context.Background(), TransferTxParams{
+			_, err := testStore.TransferTx(context.Background(), TransferTxParams{
 				FromAccountID: fromAccountId,
 				ToAccountID:   toAccountId,
 				Amount:        amount,
@@ -146,9 +140,9 @@ func TestCreateTransferTxDeadlock(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	fromAccount, err := testQueries.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
+	fromAccount, err := testStore.GetUserAccount(context.Background(), GetUserAccountParams{acc1.UserID, acc1.ID})
 	require.NoError(t, err)
-	toAccount, err := testQueries.GetUserAccount(context.Background(), GetUserAccountParams{acc2.UserID, acc2.ID})
+	toAccount, err := testStore.GetUserAccount(context.Background(), GetUserAccountParams{acc2.UserID, acc2.ID})
 	require.NoError(t, err)
 
 	//check balances
