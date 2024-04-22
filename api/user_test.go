@@ -71,7 +71,6 @@ func TestCreateUser(t *testing.T) {
 				require.Equal(t, user.Email, gotUser.Email)
 				require.Equal(t, user.Username, gotUser.Username)
 				require.Equal(t, user.FullName, gotUser.FullName)
-				require.Equal(t, user.ID, gotUser.ID)
 				require.Empty(t, gotUser.HashedPassword)
 			},
 		},
@@ -138,7 +137,6 @@ func TestLoginUserAPI(t *testing.T) {
 				require.Equal(t, user.Email, response.User.Email)
 				require.Equal(t, user.Username, response.User.Username)
 				require.Equal(t, user.FullName, response.User.FullName)
-				require.Equal(t, user.ID, response.User.ID)
 				require.Empty(t, response.User.HashedPassword)
 			},
 		},

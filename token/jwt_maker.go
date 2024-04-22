@@ -1,6 +1,7 @@
 package token
 
 import (
+	"bank/utils"
 	"errors"
 	"fmt"
 	"time"
@@ -31,7 +32,7 @@ type JWTPayload struct {
 	jwt.RegisteredClaims
 }
 
-func NewJWTPayload(userID int64, duration time.Duration) (*JWTPayload, error) {
+func NewJWTPayload(userID int64, role utils.Role, duration time.Duration) (*JWTPayload, error) {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -45,6 +46,7 @@ func NewJWTPayload(userID int64, duration time.Duration) (*JWTPayload, error) {
 	payload.Payload = Payload{
 		ID:        uuid,
 		UserID:    userID,
+		Role:      role,
 		IssuedAt:  issuedAt,
 		ExpiresAt: expiresAt,
 	}
@@ -61,8 +63,8 @@ func NewJWTPayload(userID int64, duration time.Duration) (*JWTPayload, error) {
 	return payload, nil
 }
 
-func (maker *JWTMaker) CreateToken(userID int64, duration time.Duration) (string, *Payload, error) {
-	payload, err := NewJWTPayload(userID, duration)
+func (maker *JWTMaker) CreateToken(userID int64, role utils.Role, duration time.Duration) (string, *Payload, error) {
+	payload, err := NewJWTPayload(userID, role, duration)
 	if err != nil {
 		return "", &payload.Payload, err
 	}

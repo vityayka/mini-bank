@@ -212,6 +212,10 @@
     "pbUpdateUserRequest": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
         "password": {
           "type": "string"
         },
@@ -234,6 +238,10 @@
     "pbUser": {
       "type": "object",
       "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
         "username": {
           "type": "string"
         },

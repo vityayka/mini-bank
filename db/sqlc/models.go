@@ -57,6 +57,7 @@ type User struct {
 	PasswordChangedAt time.Time   `json:"password_changed_at"`
 	CreatedAt         time.Time   `json:"created_at"`
 	IsVerified        pgtype.Bool `json:"is_verified"`
+	Role              string      `json:"role"`
 }
 
 type VerifyEmail struct {

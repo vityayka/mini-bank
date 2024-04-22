@@ -2,6 +2,7 @@ package api
 
 import (
 	"bank/token"
+	"bank/utils"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +21,7 @@ func addAuthorization(
 	userID int64,
 	duration time.Duration,
 ) {
-	token, payload, err := tokenMaker.CreateToken(userID, duration)
+	token, payload, err := tokenMaker.CreateToken(userID, utils.Depositor, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 

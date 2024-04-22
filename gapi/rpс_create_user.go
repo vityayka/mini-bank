@@ -28,6 +28,7 @@ func (server *Server) CreateUser(ctx context.Context, r *pb.CreateUserRequest) (
 
 	arg := db.CreateUserParams{
 		Username:       r.GetUsername(),
+		Role:           string(utils.Depositor),
 		HashedPassword: hashedPassword,
 		FullName:       r.GetFullName(),
 		Email:          r.GetEmail(),

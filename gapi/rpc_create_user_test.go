@@ -20,6 +20,7 @@ func randomUser(password string) db.User {
 	hashedPassword, _ := utils.HashedPassword(password)
 	return db.User{
 		ID:             utils.RandomInt(1, 1000),
+		Role:           string(utils.Depositor),
 		Username:       utils.RandomString(6),
 		HashedPassword: hashedPassword,
 		FullName:       fmt.Sprintf("%s %s", utils.RandomString(6), utils.RandomString(6)),

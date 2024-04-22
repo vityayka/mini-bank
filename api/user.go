@@ -45,6 +45,7 @@ func (server *Server) createUser(ctx *gin.Context) {
 
 	arg := db.CreateUserParams{
 		Username:       request.Username,
+		Role:           string(utils.Depositor),
 		HashedPassword: hashedPassword,
 		FullName:       request.FullName,
 		Email:          request.Email,
@@ -111,13 +112,13 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.ID, server.config.AccessTokenDuration)
+	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.ID, utils.Role(user.Role), server.config.AccessTokenDuration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.ID, server.config.RefreshTokenDuration)
+	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.ID, utils.Role(user.Role), server.config.RefreshTokenDuration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

@@ -1,6 +1,7 @@
 package token
 
 import (
+	"bank/utils"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -30,8 +31,8 @@ func NewPasetoMaker(symmetricKey string) (Maker, error) {
 	return &PasetoMaker{v4SymmetricKey}, nil
 }
 
-func (pm *PasetoMaker) CreateToken(userID int64, duration time.Duration) (string, *Payload, error) {
-	payload, err := NewPayload(userID, duration)
+func (pm *PasetoMaker) CreateToken(userID int64, role utils.Role, duration time.Duration) (string, *Payload, error) {
+	payload, err := NewPayload(userID, role, duration)
 	claims := Claims{*payload, payload.ExpiresAt}
 	if err != nil {
 		return "", payload, err

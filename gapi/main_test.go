@@ -25,12 +25,12 @@ func newTestServer(t *testing.T, store db.Store, taskDistributor async.TaskDistr
 func newContextWithAuthMetadata(
 	t *testing.T,
 	server *Server,
-	userID int64,
+	user db.User,
 	duration time.Duration,
 	authHeader,
 	authType string,
 ) context.Context {
-	token, _, err := server.tokenMaker.CreateToken(userID, duration)
+	token, _, err := server.tokenMaker.CreateToken(user.ID, utils.Role(user.Role), duration)
 	require.NoError(t, err)
 	return metadata.NewIncomingContext(
 		context.Background(),

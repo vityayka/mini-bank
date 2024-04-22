@@ -35,12 +35,12 @@ func (server *Server) LoginUser(ctx context.Context, r *pb.LoginUserRequest) (*p
 		return nil, status.Errorf(codes.PermissionDenied, "wrong password")
 	}
 
-	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.ID, server.config.AccessTokenDuration)
+	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.ID, utils.Role(user.Role), server.config.AccessTokenDuration)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.ID, server.config.RefreshTokenDuration)
+	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.ID, utils.Role(user.Role), server.config.RefreshTokenDuration)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}

@@ -17,7 +17,7 @@ import (
 )
 
 func (server *Server) UpdateUser(ctx context.Context, r *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	authPayload, err := server.authorizeUser(ctx)
+	authPayload, err := server.authorizeUser(ctx, []utils.Role{utils.Banker, utils.Depositor})
 	if err != nil {
 		return nil, unauthenticatedError(err)
 	}
@@ -25,8 +25,12 @@ func (server *Server) UpdateUser(ctx context.Context, r *pb.UpdateUserRequest) (
 		return nil, validationError(violations)
 	}
 
+	if authPayload.Role != utils.Banker && authPayload.UserID != r.GetId() {
+		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
+	}
+
 	arg := db.UpdateUserParams{
-		ID:       authPayload.UserID,
+		ID:       r.GetId(),
 		FullName: pgtype.Text{String: r.GetFullName(), Valid: r.FullName != nil},
 		Email:    pgtype.Text{String: r.GetEmail(), Valid: r.Email != nil},
 	}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bank/utils"
 	"fmt"
 	"net/http"
 	"time"
@@ -58,7 +59,7 @@ func (server *Server) renewToken(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.ID, server.config.AccessTokenDuration)
+	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.ID, utils.Role(user.Role), server.config.AccessTokenDuration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return

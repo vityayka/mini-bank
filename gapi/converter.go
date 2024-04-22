@@ -9,6 +9,7 @@ import (
 
 func convertUser(user db.User) *pb.User {
 	return &pb.User{
+		Id:                user.ID,
 		Username:          user.Username,
 		FullName:          user.FullName,
 		Email:             user.Email,

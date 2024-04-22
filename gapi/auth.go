@@ -2,12 +2,16 @@ package gapi
 
 import (
 	"bank/token"
+	"bank/utils"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"google.golang.org/grpc/metadata"
 )
+
+var ErrRoleForbidden = errors.New("role forbidden")
 
 const (
 	authHeader                  = "authorization"
@@ -18,7 +22,7 @@ const (
 	msgErrAuthHeaderUnsupported = "unsupported auth scheme"
 )
 
-func (server *Server) authorizeUser(ctx context.Context) (*token.Payload, error) {
+func (server *Server) authorizeUser(ctx context.Context, allowedRoles []utils.Role) (*token.Payload, error) {
 	md, isOK := metadata.FromIncomingContext(ctx)
 	if !isOK {
 		return nil, fmt.Errorf(msgErrMetadata)
@@ -42,5 +46,19 @@ func (server *Server) authorizeUser(ctx context.Context) (*token.Payload, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to auth: %s", err.Error())
 	}
+
+	if !isRoleAllowed(payload.Role, allowedRoles) {
+		return nil, ErrRoleForbidden
+	}
+
 	return payload, nil
+}
+
+func isRoleAllowed(role utils.Role, allowedRoles []utils.Role) bool {
+	for _, allowedRole := range allowedRoles {
+		if role == allowedRole {
+			return true
+		}
+	}
+	return false
 }

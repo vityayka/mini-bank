@@ -18,6 +18,8 @@ import (
 func TestUpdateUser(t *testing.T) {
 	password := "password"
 	user := randomUser(password)
+	banker := randomUser(password)
+	banker.Role = string(utils.Banker)
 
 	newName := utils.RandomString(10)
 	newEmail := utils.RandomEmail()
@@ -32,6 +34,7 @@ func TestUpdateUser(t *testing.T) {
 		{
 			name: "OK",
 			params: pb.UpdateUserRequest{
+				Id:       user.ID,
 				FullName: &newName,
 				Email:    &newEmail,
 			},
@@ -56,7 +59,46 @@ func TestUpdateUser(t *testing.T) {
 					Return(updatedUser, nil)
 			},
 			makeContext: func(server *Server) context.Context {
-				return newContextWithAuthMetadata(t, server, user.ID, time.Minute, authHeader, authBearer)
+				return newContextWithAuthMetadata(t, server, user, time.Minute, authHeader, authBearer)
+			},
+			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
+				require.NoError(t, err)
+				gotUser := res.User
+
+				require.Equal(t, newEmail, gotUser.Email)
+				require.Equal(t, user.Username, gotUser.Username)
+				require.Equal(t, newName, gotUser.FullName)
+			},
+		},
+		{
+			name: "Banker update",
+			params: pb.UpdateUserRequest{
+				Id:       user.ID,
+				FullName: &newName,
+				Email:    &newEmail,
+			},
+			buildStubs: func(store *mockdb.MockStore) {
+				args := db.UpdateUserParams{
+					ID:       user.ID,
+					FullName: pgtype.Text{String: newName, Valid: true},
+					Email:    pgtype.Text{String: newEmail, Valid: true},
+				}
+
+				updatedUser := db.User{
+					ID:             user.ID,
+					Username:       user.Username,
+					HashedPassword: user.HashedPassword,
+					FullName:       newName,
+					Email:          newEmail,
+				}
+
+				store.EXPECT().
+					UpdateUser(gomock.Any(), gomock.Eq(args)).
+					Times(1).
+					Return(updatedUser, nil)
+			},
+			makeContext: func(server *Server) context.Context {
+				return newContextWithAuthMetadata(t, server, user, time.Minute, authHeader, authBearer)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.NoError(t, err)
@@ -70,13 +112,14 @@ func TestUpdateUser(t *testing.T) {
 		{
 			name: "Token expired",
 			params: pb.UpdateUserRequest{
+				Id:       user.ID,
 				FullName: &newName,
 				Email:    &newEmail,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			makeContext: func(server *Server) context.Context {
-				return newContextWithAuthMetadata(t, server, user.ID, -time.Minute, authHeader, authBearer)
+				return newContextWithAuthMetadata(t, server, user, -time.Minute, authHeader, authBearer)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -85,13 +128,14 @@ func TestUpdateUser(t *testing.T) {
 		{
 			name: "Wrong auth type",
 			params: pb.UpdateUserRequest{
+				Id:       user.ID,
 				FullName: &newName,
 				Email:    &newEmail,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 			},
 			makeContext: func(server *Server) context.Context {
-				return newContextWithAuthMetadata(t, server, user.ID, time.Minute, authHeader, "basic")
+				return newContextWithAuthMetadata(t, server, user, time.Minute, authHeader, "basic")
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -101,6 +145,7 @@ func TestUpdateUser(t *testing.T) {
 		{
 			name: "User not found",
 			params: pb.UpdateUserRequest{
+				Id:       user.ID,
 				FullName: &newName,
 				Email:    &newEmail,
 			},
@@ -117,7 +162,7 @@ func TestUpdateUser(t *testing.T) {
 					Return(db.User{}, sql.ErrNoRows)
 			},
 			makeContext: func(server *Server) context.Context {
-				return newContextWithAuthMetadata(t, server, user.ID, time.Minute, authHeader, authBearer)
+				return newContextWithAuthMetadata(t, server, user, time.Minute, authHeader, authBearer)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)
@@ -127,6 +172,7 @@ func TestUpdateUser(t *testing.T) {
 		{
 			name: "DB not responding",
 			params: pb.UpdateUserRequest{
+				Id:       user.ID,
 				FullName: &newName,
 				Email:    &newEmail,
 			},
@@ -143,7 +189,7 @@ func TestUpdateUser(t *testing.T) {
 					Return(db.User{}, sql.ErrConnDone)
 			},
 			makeContext: func(server *Server) context.Context {
-				return newContextWithAuthMetadata(t, server, user.ID, time.Minute, authHeader, authBearer)
+				return newContextWithAuthMetadata(t, server, user, time.Minute, authHeader, authBearer)
 			},
 			checkResponse: func(t *testing.T, res *pb.UpdateUserResponse, err error) {
 				require.Error(t, err)

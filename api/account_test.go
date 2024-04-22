@@ -38,7 +38,7 @@ func TestGetAccountApi(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetUserAccount(gomock.Any(), gomock.Eq(db.GetUserAccountParams{account.UserID, account.ID})).
+					GetUserAccount(gomock.Any(), gomock.Eq(db.GetUserAccountParams{UserID: account.UserID, ID: account.ID})).
 					Times(1).
 					Return(account, nil)
 			},
@@ -62,7 +62,7 @@ func TestGetAccountApi(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetUserAccount(gomock.Any(), gomock.Eq(db.GetUserAccountParams{account.UserID, account.ID})).
+					GetUserAccount(gomock.Any(), gomock.Eq(db.GetUserAccountParams{UserID: account.UserID, ID: account.ID})).
 					Times(1).
 					Return(db.Account{}, sql.ErrNoRows)
 			},
@@ -102,7 +102,7 @@ func TestGetAccountApi(t *testing.T) {
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
-					GetUserAccount(gomock.Any(), gomock.Eq(db.GetUserAccountParams{account.UserID, account.ID})).
+					GetUserAccount(gomock.Any(), gomock.Eq(db.GetUserAccountParams{UserID: account.UserID, ID: account.ID})).
 					Times(1).
 					Return(db.Account{}, sql.ErrConnDone)
 			},
@@ -377,6 +377,6 @@ func randomAccount(userID int64) db.Account {
 		ID:       utils.RandomInt(1, 1000),
 		Owner:    utils.RandomName(),
 		Currency: utils.RandomCurrency(),
-		UserID:   utils.RandomInt(1, 1000),
+		UserID:   userID,
 	}
 }
