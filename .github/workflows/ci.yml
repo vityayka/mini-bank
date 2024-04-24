@@ -35,12 +35,12 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.22'
 
       - name: Install golang-migrate
         run: | 
@@ -53,8 +53,7 @@ jobs:
 
       - name: Test
         env:
-          DB_DRIVER: ${{ vars.DB_DRIVER }}
-          DB_SOURCE: ${{ vars.DB_SOURCE }}
+          DB_URI: ${{ vars.DB_URI }}
           SERVER_ADDRESS: ${{ vars.SERVER_ADDRESS }}
           TOKEN_SYMMETRIC_KEY: ${{ vars.TOKEN_SYMMETRIC_KEY }}
           ACCESS_TOKEN_DURATION: ${{ vars.ACCESS_TOKEN_DURATION }}        

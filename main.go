@@ -33,7 +33,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	connPool, err := pgxpool.New(ctx, config.DBSource)
+	connPool, err := pgxpool.New(ctx, config.DBURI)
 
 	if err != nil {
 		log.Fatal().Err(err)
